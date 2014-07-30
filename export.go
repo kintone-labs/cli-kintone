@@ -2,10 +2,13 @@ package main
 
 import (
 	"github.com/ryokdy/go-kintone"
+	"github.com/djimenez/iconv-go"
 	"sort"
 	"fmt"
 	"strings"
 	"time"
+	"io"
+	"os"
 )
 
 
@@ -19,10 +22,22 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 	return records, nil
 }
 
+func getWriter() io.Writer {
+	var writer io.Writer
+	if encoding != "utf-8" {
+		writer, _ = iconv.NewWriter(os.Stdout, "utf-8", encoding)
+	} else {
+		writer = os.Stdout
+	}
+	return writer	
+}
+
 func writeJson(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
-	fmt.Print("{\"records\": [\n")
+	writer := getWriter()
+	
+	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, fields, offset)
 		if err != nil {
@@ -30,18 +45,18 @@ func writeJson(app *kintone.App) error {
 		}
 		for _, record := range records {
 			if i > 0 {
-				fmt.Print(",\n")
+				fmt.Fprint(writer, ",\n")
 			}			
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
-			fmt.Print(json)
+			fmt.Fprint(writer, json)
 			i += 1
 		}
 		if len(records) < ROW_LIMIT {
 			break
 		}
 	}
-	fmt.Print("\n]}")
+	fmt.Fprint(writer, "\n]}")
 
 	return nil
 }
@@ -49,6 +64,7 @@ func writeJson(app *kintone.App) error {
 func writeCsv(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
+	writer := getWriter()
 
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, fields, offset)
@@ -71,35 +87,35 @@ func writeCsv(app *kintone.App) error {
 				j := 0
 				for _, f := range fields {
 					if j > 0 {
-						fmt.Print(",");
+						fmt.Fprint(writer, ",");
 					}
 					if f == "$id" {
-						fmt.Print("\"" + f + "[" + kintone.FT_ID + "]\"")
+						fmt.Fprint(writer, "\"" + f + "[" + kintone.FT_ID + "]\"")
 					} else if f == "$revision" {
-						fmt.Print("\"" + f + "[" + kintone.FT_REVISION + "]\"")
+						fmt.Fprint(writer, "\"" + f + "[" + kintone.FT_REVISION + "]\"")
 					} else {
-						fmt.Print("\"" + f + "[" + getType(record.Fields[f]) + "]\"")
+						fmt.Fprint(writer, "\"" + f + "[" + getType(record.Fields[f]) + "]\"")
 					}
 					j++;            
 				}
-				fmt.Print("\n");
+				fmt.Fprint(writer, "\n");
 			}
 			j := 0
 			for _, f := range fields {
 				field := record.Fields[f]
 				if j > 0 {
-					fmt.Print(",");
+					fmt.Fprint(writer, ",");
 				}
 				if f == "$id" {
-					fmt.Printf("\"%d\"",  record.Id())
+					fmt.Fprintf(writer, "\"%d\"",  record.Id())
 				} else if f == "$revision" {
-					fmt.Printf("\"%d\"",  record.Revision())
+					fmt.Fprintf(writer, "\"%d\"",  record.Revision())
 				} else {
-					fmt.Print("\"" + escapeCol(toString(field, "\n")) + "\"")
+					fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
 				}
 				j++;            
 			}
-			fmt.Print("\n");
+			fmt.Fprint(writer, "\n");
 			i++;
 		}
 		if len(records) < ROW_LIMIT {

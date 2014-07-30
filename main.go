@@ -17,10 +17,10 @@ var basic string
 var format string
 var query string
 var appId uint64
-var encoding string
 var fields []string
 var filePath string
 var deleteAll bool
+var encoding string
 
 const ROW_LIMIT = 100
 
@@ -37,7 +37,7 @@ func main() {
 	flag.StringVar(&colNames, "c", "", "Field names (comma separated)")
 	flag.StringVar(&filePath, "f", "", "Input file path")
 	flag.BoolVar(&deleteAll, "D", false, "Delete all records before insert")
-	flag.StringVar(&encoding, "e", "utf8", "Character encoding: 'utf8'(default), 'sjis' or 'euc'")
+	flag.StringVar(&encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'sjis' or 'euc'")
 	
     flag.Parse()
 
@@ -54,6 +54,7 @@ func main() {
 		fields = strings.Split(colNames, ",")
 	}
 
+	
 	var app *kintone.App
 	
 	if apiToken == "" {

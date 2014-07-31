@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/ryokdy/go-kintone"
+	"github.com/djimenez/iconv-go"
 	"fmt"
 	"strings"
 	"time"
@@ -12,6 +13,16 @@ import (
 	"regexp"
 )
 
+func getReader(file *os.File) io.Reader {
+	var reader io.Reader
+	if encoding != "utf-8" {
+		reader, _ = iconv.NewReader(file, encoding, "utf-8")
+	} else {
+		reader = file
+	}
+	return reader
+}
+
 func readCsv(app *kintone.App, filePath string) error {
 	file, err := os.Open(filePath)
     if err != nil {
@@ -19,7 +30,7 @@ func readCsv(app *kintone.App, filePath string) error {
     }
 	defer file.Close()
 
-	reader := csv.NewReader(file)
+	reader := csv.NewReader(getReader(file))
 
 	head := true
 	updating := false
@@ -141,17 +152,25 @@ func getField(fieldType string, value string, updating bool) interface{} {
 	case kintone.FT_CALC:
 		return nil
 	case kintone.FT_CHECK_BOX:
-		return kintone.CheckBoxField(strings.Split(value, "\n"))
+		if len(value) == 0 {
+			return kintone.CheckBoxField([]string{})
+		} else {
+			return kintone.CheckBoxField(strings.Split(value, "\n"))
+		}
 	case kintone.FT_RADIO:
 		return kintone.RadioButtonField(value)
 	case kintone.FT_SINGLE_SELECT:
-		if value == "" {
+		if len(value) == 0 {
 			return kintone.SingleSelectField{Valid: false}
 		} else {
 			return kintone.SingleSelectField{value, true}
 		}
 	case kintone.FT_MULTI_SELECT:
-		return kintone.MultiSelectField(strings.Split(value, "\n"))
+		if len(value) == 0 {
+			return kintone.MultiSelectField([]string{})
+		} else {
+			return kintone.MultiSelectField(strings.Split(value, "\n"))
+		}
 	case kintone.FT_FILE:
 		return nil
 	case kintone.FT_LINK:
@@ -185,9 +204,11 @@ func getField(fieldType string, value string, updating bool) interface{} {
 		}
 	case kintone.FT_USER:
 		users := strings.Split(value, "\n")
-		var ret kintone.UserField
+		var ret kintone.UserField = []kintone.User{}
 		for _, user := range users {
-			ret = append(ret, kintone.User{Code: user})
+			if len(strings.TrimSpace(user)) > 0 {
+				ret = append(ret, kintone.User{Code: user})
+			}
 		}
 		return ret
 	case kintone.FT_CATEGORY:

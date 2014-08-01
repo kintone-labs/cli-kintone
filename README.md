@@ -14,22 +14,22 @@ kintone-ci is a command line utility for kintone.
 
 ## How to Build
 
-1. Getting the source code
+Getting the source code
 
     $ cd ${GOPATH}/src
     $ git clone https://github.com/ryokdy/kintone-ci.git
-    
-2. Install dependencies
+
+Install dependencies
 
     $ go get github.com/ryokdy/go-kintone
     $ go get github.com/djimenez/iconv-go
     $ go get github.com/howeyc/gopass
 
-2. build
+build
 
     $ cd ${GOPATH}/src/kintone-ci
     $ go build
-    
+
 You may fix github.com/djimenez/iconv-go/converter.go as follows if you build using MinGW.
 
     #cgo windows LDFLAGS: <PATH_TO_MINGW>/x86_64-w64-mingw32/lib/libiconv.a -liconv

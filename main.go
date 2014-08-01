@@ -39,7 +39,7 @@ func main() {
 	flag.BoolVar(&deleteAll, "D", false, "Delete all records before insert")
 	flag.StringVar(&encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'sjis' or 'euc'")
 	
-    flag.Parse()
+	flag.Parse()
 
 	if appId == 0 || (apiToken == "" && (domain == "" || login == "")) {
 		flag.PrintDefaults()
@@ -64,16 +64,16 @@ func main() {
 		}
 
 		app = &kintone.App{
-			Domain:   domain,
-			User:     login,
+			Domain:	  domain,
+			User:	  login,
 			Password: password,
-			AppId:    appId,
+			AppId:	  appId,
 		}
 	} else {
 		app = &kintone.App{
-			Domain:   domain,
+			Domain:	  domain,
 			ApiToken: apiToken,
-			AppId:    appId,
+			AppId:	  appId,
 		}
 	}
 

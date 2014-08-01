@@ -15,10 +15,10 @@ import (
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, error) {
 
 	newQuery := query + fmt.Sprintf(" limit %v offset %v", ROW_LIMIT, offset)
-    records, err := app.GetRecords(fields, newQuery)
-    if err != nil {
-        return nil, err
-    }
+	records, err := app.GetRecords(fields, newQuery)
+	if err != nil {
+		return nil, err
+	}
 	return records, nil
 }
 
@@ -96,7 +96,7 @@ func writeCsv(app *kintone.App) error {
 					} else {
 						fmt.Fprint(writer, "\"" + f + "[" + getType(record.Fields[f]) + "]\"")
 					}
-					j++;            
+					j++;			
 				}
 				fmt.Fprint(writer, "\n");
 			}
@@ -113,7 +113,7 @@ func writeCsv(app *kintone.App) error {
 				} else {
 					fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
 				}
-				j++;            
+				j++;			
 			}
 			fmt.Fprint(writer, "\n");
 			i++;

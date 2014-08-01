@@ -25,9 +25,9 @@ func getReader(file *os.File) io.Reader {
 
 func readCsv(app *kintone.App, filePath string) error {
 	file, err := os.Open(filePath)
-    if err != nil {
-        return err
-    }
+	if err != nil {
+		return err
+	}
 	defer file.Close()
 
 	reader := csv.NewReader(getReader(file))
@@ -38,12 +38,12 @@ func readCsv(app *kintone.App, filePath string) error {
 	var fieldTypes []string
 	
 	for {
-        row, err := reader.Read()
-        if err == io.EOF {
-            break
-        } else if err != nil {
+		row, err := reader.Read()
+		if err == io.EOF {
+			break
+		} else if err != nil {
 			return err
-        }
+		}
 		//log.Printf("%#v", record)
 		if head && fields == nil {
 			fields =make([]string, len(row))
@@ -89,8 +89,8 @@ func readCsv(app *kintone.App, filePath string) error {
 				upsert(app, records[:], updating)
 				records = make([]*kintone.Record, 0, ROW_LIMIT)
 			}
-        }
-    }
+		}
+	}
 	if len(records) > 0 {
 		return upsert(app, records[:], updating)
 	}

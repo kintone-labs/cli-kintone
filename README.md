@@ -1,9 +1,38 @@
 kintone-ci
 ==========
 
-You may fix github.com/djimenez/iconv-go/converter.go as follows.
+kintone-ci is a command line utility for kintone.
 
-    #cgo windows LDFLAGS: <PATH_TO_LIB>/libiconv.a -liconv
+## Version
+
+0.1
+
+## Requirement
+
+- go1.2 or later
+- [MinGW](http://mingw-w64.sourceforge.net/) for Windows build
+
+## How to Build
+
+1. Getting the source code
+
+    $ cd ${GOPATH}/src
+    $ git clone https://github.com/ryokdy/kintone-ci.git
+    
+2. Install dependencies
+
+    $ go get github.com/ryokdy/go-kintone
+    $ go get github.com/djimenez/iconv-go
+    $ go get github.com/howeyc/gopass
+
+2. build
+
+    $ cd ${GOPATH}/src/kintone-ci
+    $ go build
+    
+You may fix github.com/djimenez/iconv-go/converter.go as follows if you build using MinGW.
+
+    #cgo windows LDFLAGS: <PATH_TO_MINGW>/x86_64-w64-mingw32/lib/libiconv.a -liconv
 
 ## Usage
 
@@ -23,12 +52,20 @@ You may fix github.com/djimenez/iconv-go/converter.go as follows.
 
 Export all columns from an app.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -t <API_KEY>
+    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN>
 
 Export the specified columns to csv file as Shif-JIS encoding.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "$id, name1, name2" -t <API_KEY> -f <OUTPUT_FILE>
+    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 
-If the file has $id columns, the original data will be updated. If not, New row will be inserted.
+If the file has $id column, the original data will be updated. If not, new row will be inserted.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_KEY> -f <INPUT_FILE>
+    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+
+## Licence
+
+GPL v2
+
+## Copyright
+
+Copyright(c) Cybozu, Inc.

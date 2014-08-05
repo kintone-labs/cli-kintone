@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/ryokdy/go-kintone"
-	"github.com/djimenez/iconv-go"
+	"code.google.com/p/go.text/transform"
 	"sort"
 	"fmt"
 	"strings"
@@ -14,8 +14,8 @@ import (
 
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, error) {
 
-	newQuery := query + fmt.Sprintf(" limit %v offset %v", ROW_LIMIT, offset)
-	records, err := app.GetRecords(fields, newQuery)
+	newQuery := config.query + fmt.Sprintf(" limit %v offset %v", ROW_LIMIT, offset)
+	records, err := app.GetRecords(config.fields, newQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -23,13 +23,11 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 }
 
 func getWriter() io.Writer {
-	var writer io.Writer
-	if encoding != "utf-8" {
-		writer, _ = iconv.NewWriter(os.Stdout, "utf-8", encoding)
-	} else {
-		writer = os.Stdout
+	encoding := getEncoding()
+	if (encoding == nil) {
+		return os.Stdout
 	}
-	return writer	
+	return transform.NewWriter(os.Stdout, encoding.NewEncoder())
 }
 
 func writeJson(app *kintone.App) error {
@@ -39,7 +37,7 @@ func writeJson(app *kintone.App) error {
 	
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += ROW_LIMIT {
-		records, err := getRecords(app, fields, offset)
+		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
@@ -65,16 +63,17 @@ func writeCsv(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter()
+	var fields []string
 
 	for ;;offset += ROW_LIMIT {
-		records, err := getRecords(app, fields, offset)
+		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
 		
 		for _, record := range records {
 			if i == 0 {
-				if fields == nil {
+				if config.fields == nil {
 					tmpFields := make([]string, 0, len(record.Fields))
 					for key, _ := range record.Fields {
 						tmpFields = append(tmpFields, key)
@@ -83,22 +82,26 @@ func writeCsv(app *kintone.App) error {
 					fields = make([]string, 0, len(record.Fields) + 1);
 					fields = append(fields, "$id")
 					fields = append(fields, tmpFields...);
+				} else {
+					fields = config.fields
 				}
 				j := 0
 				for _, f := range fields {
 					if j > 0 {
 						fmt.Fprint(writer, ",");
 					}
+					var col string
 					if f == "$id" {
-						fmt.Fprint(writer, "\"" + f + "[" + kintone.FT_ID + "]\"")
+						col = kintone.FT_ID
 					} else if f == "$revision" {
-						fmt.Fprint(writer, "\"" + f + "[" + kintone.FT_REVISION + "]\"")
+						col =kintone.FT_REVISION
 					} else {
-						fmt.Fprint(writer, "\"" + f + "[" + getType(record.Fields[f]) + "]\"")
+						col = getType(record.Fields[f])
 					}
+					fmt.Fprint(writer, "\"" + f + "[" + col + "]\"")
 					j++;			
 				}
-				fmt.Fprint(writer, "\n");
+				fmt.Fprint(writer, "\r\n");
 			}
 			j := 0
 			for _, f := range fields {
@@ -115,7 +118,7 @@ func writeCsv(app *kintone.App) error {
 				}
 				j++;			
 			}
-			fmt.Fprint(writer, "\n");
+			fmt.Fprint(writer, "\r\n");
 			i++;
 		}
 		if len(records) < ROW_LIMIT {

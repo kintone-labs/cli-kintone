@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/ryokdy/go-kintone"
-	"github.com/djimenez/iconv-go"
+	"code.google.com/p/go.text/transform"
 	"fmt"
 	"strings"
 	"time"
@@ -14,13 +14,11 @@ import (
 )
 
 func getReader(file *os.File) io.Reader {
-	var reader io.Reader
-	if encoding != "utf-8" {
-		reader, _ = iconv.NewReader(file, encoding, "utf-8")
-	} else {
-		reader = file
+	encoding := getEncoding()
+	if (encoding == nil) {
+		return file
 	}
-	return reader
+	return transform.NewReader(file, encoding.NewDecoder())
 }
 
 func readCsv(app *kintone.App, filePath string) error {
@@ -36,7 +34,8 @@ func readCsv(app *kintone.App, filePath string) error {
 	updating := false
 	records := make([]*kintone.Record, 0, ROW_LIMIT)
 	var fieldTypes []string
-	
+	fields := config.fields
+
 	for {
 		row, err := reader.Read()
 		if err == io.EOF {
@@ -44,7 +43,7 @@ func readCsv(app *kintone.App, filePath string) error {
 		} else if err != nil {
 			return err
 		}
-		//log.Printf("%#v", record)
+		//fmt.Printf("%#v", row)
 		if head && fields == nil {
 			fields =make([]string, len(row))
 			fieldTypes = make([]string, len(row))
@@ -103,9 +102,9 @@ func upsert(app *kintone.App, recs []*kintone.Record, updating bool)  error {
 	if updating {
 		err = app.UpdateRecords(recs, true)
 	} else {
-		if deleteAll {
+		if config.deleteAll {
 			deleteRecords(app)
-			deleteAll = false
+			config.deleteAll = false
 		}
 		_, err = app.AddRecords(recs)
 	}

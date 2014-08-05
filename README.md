@@ -9,8 +9,8 @@ kintone-ci is a command line utility for kintone.
 
 ## Requirement
 
-- go1.2 or later
-- [MinGW](http://mingw-w64.sourceforge.net/) for Windows build
+- Go 1.2 or later
+- Git and Mercurial to be able to clone the packages
 
 ## How to Build
 
@@ -22,17 +22,13 @@ Getting the source code
 Install dependencies
 
     $ go get github.com/ryokdy/go-kintone
-    $ go get github.com/djimenez/iconv-go
     $ go get github.com/howeyc/gopass
+    $ go get code.google.com/p/go.text/encoding
 
 build
 
     $ cd ${GOPATH}/src/kintone-ci
     $ go build
-
-You may fix github.com/djimenez/iconv-go/converter.go as follows if you build using MinGW.
-
-    #cgo windows LDFLAGS: <PATH_TO_MINGW>/x86_64-w64-mingw32/lib/libiconv.a -liconv
 
 ## Usage
 

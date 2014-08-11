@@ -34,6 +34,10 @@ build
 
 These binaries are available for download.
 
+- Windows
+- Linux
+- Mac OS X
+
 https://github.com/kintone/kintone-ci/releases
 
 ## Usage

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/ryokdy/go-kintone"
+	"github.com/cybozu/go-kintone"
 	"code.google.com/p/go.text/transform"
 	"fmt"
 	"strings"

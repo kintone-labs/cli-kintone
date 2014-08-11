@@ -4,7 +4,7 @@ import (
 	"code.google.com/p/go.text/encoding"
 	"code.google.com/p/go.text/encoding/japanese"
 	"code.google.com/p/go.text/encoding/unicode"
-	"github.com/ryokdy/go-kintone"
+	"github.com/cybozu/go-kintone"
 	"github.com/howeyc/gopass"
 	"flag"
 	"log"

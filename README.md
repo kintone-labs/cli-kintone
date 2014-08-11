@@ -17,11 +17,11 @@ kintone-ci is a command line utility for kintone.
 Getting the source code
 
     $ cd ${GOPATH}/src
-    $ git clone https://github.com/ryokdy/kintone-ci.git
+    $ git clone https://github.com/kintone/kintone-ci.git
 
 Install dependencies
 
-    $ go get github.com/ryokdy/go-kintone
+    $ go get github.com/cybozu/go-kintone
     $ go get github.com/howeyc/gopass
     $ go get code.google.com/p/go.text/encoding
 

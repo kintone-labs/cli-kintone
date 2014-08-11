@@ -7,12 +7,12 @@ kintone-ci is a command line utility for kintone.
 
 0.1
 
-## Requirement
+## How to Build
+
+### Requirement
 
 - Go 1.2 or later
 - Git and Mercurial to be able to clone the packages
-
-## How to Build
 
 Getting the source code
 
@@ -29,6 +29,12 @@ build
 
     $ cd ${GOPATH}/src/kintone-ci
     $ go build
+
+## Downloads
+
+These binaries are available for download.
+
+https://github.com/kintone/kintone-ci/releases
 
 ## Usage
 

@@ -46,7 +46,7 @@ https://github.com/kintone/kintone-ci/releases
     -a=0: App ID
     -c="": Field names (comma separated)
     -d="": Domain name
-    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature, 'sjis' or 'euc-jp'
+    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'
     -f="": Input file path
     -o="csv": Output format: 'json' or 'csv'(default)
     -p="": Password

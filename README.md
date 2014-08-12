@@ -5,7 +5,7 @@ kintone-ci is a command line utility for kintone.
 
 ## Version
 
-0.1
+0.2
 
 ## How to Build
 

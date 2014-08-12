@@ -113,10 +113,10 @@ func upsert(app *kintone.App, recs []*kintone.Record, updating bool)  error {
 }
 
 func deleteRecords(app *kintone.App) error {
-	offset := int64(0)
-	for ;;offset += ROW_LIMIT {
+	var lastId uint64 = 0
+	for {
 		ids := make([]uint64, 0, ROW_LIMIT)
-		records, err := getRecords(app, []string{"$id"}, offset)
+		records, err := getRecords(app, []string{"$id"}, 0)
 		if err != nil {
 			return err
 		}
@@ -133,6 +133,11 @@ func deleteRecords(app *kintone.App) error {
 		if len(records) < ROW_LIMIT {
 			break
 		}
+		if lastId == ids[0] {
+			// prevent an inifinite loop
+			return fmt.Errorf("Unexpected error occured during deleting")
+		}
+		lastId = ids[0]
 	}
 
 	return nil
@@ -179,6 +184,10 @@ func getField(fieldType string, value string, updating bool) interface{} {
 			return kintone.DateField{Valid: false}
 		} else {
 			dt, err := time.Parse("2006-01-02", value)
+			if err == nil {
+				return kintone.DateField{dt, true}
+			}
+			dt, err = time.Parse("2006/1/2", value)
 			if err == nil {
 				return kintone.DateField{dt, true}
 			}

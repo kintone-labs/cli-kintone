@@ -1,14 +1,15 @@
 package main
 
 import (
-	"github.com/cybozu/go-kintone"
-	"code.google.com/p/go.text/transform"
-	"sort"
 	"fmt"
-	"strings"
-	"time"
 	"io"
 	"os"
+	"sort"
+	"strings"
+	"time"
+
+	"github.com/cybozu/go-kintone"
+	"golang.org/x/text/transform"
 )
 
 

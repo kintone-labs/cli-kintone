@@ -23,7 +23,7 @@ Install dependencies
 
     $ go get github.com/cybozu/go-kintone
     $ go get github.com/howeyc/gopass
-    $ go get code.google.com/p/go.text/encoding
+    $ go get golang.org/x/text/encoding
 
 build
 

@@ -1,16 +1,17 @@
 package main
 
 import (
-	"github.com/cybozu/go-kintone"
-	"code.google.com/p/go.text/transform"
-	"fmt"
-	"strings"
-	"time"
 	"encoding/csv"
+	"fmt"
 	"io"
 	"os"
-	"strconv"
 	"regexp"
+	"strings"
+	"strconv"
+	"time"
+
+	"github.com/cybozu/go-kintone"
+	"golang.org/x/text/transform"
 )
 
 func getReader(file *os.File) io.Reader {

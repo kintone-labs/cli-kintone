@@ -1,15 +1,16 @@
 package main
 
 import (
-	"code.google.com/p/go.text/encoding"
-	"code.google.com/p/go.text/encoding/japanese"
-	"code.google.com/p/go.text/encoding/unicode"
+	"flag"
+	"fmt"
+	"log"
+	"strings"
+
 	"github.com/cybozu/go-kintone"
 	"github.com/howeyc/gopass"
-	"flag"
-	"log"
-	"fmt"
-	"strings"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/encoding/unicode"
 )
 
 type Configure struct {

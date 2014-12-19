@@ -1,7 +1,7 @@
-kintone-ci
+cli-kintone
 ==========
 
-kintone-ci is a command line utility for kintone.
+cli-kintone is a command line utility for kintone.
 
 ## Version
 
@@ -17,7 +17,7 @@ kintone-ci is a command line utility for kintone.
 Getting the source code
 
     $ cd ${GOPATH}/src
-    $ git clone https://github.com/kintone/kintone-ci.git
+    $ git clone https://github.com/kintone/cli-kintone.git
 
 Install dependencies
 
@@ -27,7 +27,7 @@ Install dependencies
 
 build
 
-    $ cd ${GOPATH}/src/kintone-ci
+    $ cd ${GOPATH}/src/cli-kintone
     $ go build
 
 ## Downloads
@@ -38,7 +38,7 @@ These binaries are available for download.
 - Linux
 - Mac OS X
 
-https://github.com/kintone/kintone-ci/releases
+https://github.com/kintone/cli-kintone/releases
 
 ## Usage
 
@@ -58,15 +58,15 @@ https://github.com/kintone/kintone-ci/releases
 
 Export all columns from an app.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN>
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN>
 
 Export the specified columns to csv file as Shif-JIS encoding.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 
 If the file has $id column, the original data will be updated. If not, new row will be inserted.
 
-    $ kintone-ci -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
 ## Licence
 

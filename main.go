@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/cybozu/go-kintone"
+	"github.com/ryokdy/go-kintone"
 	"github.com/howeyc/gopass"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
@@ -16,6 +16,8 @@ import (
 type Configure struct {
 	login string
 	password string
+	basicAuthUser string
+	basicAuthPassword string
 	apiToken string
 	domain string
 	basic string
@@ -31,6 +33,13 @@ type Configure struct {
 var config Configure
 
 const ROW_LIMIT = 100
+
+type Column struct {
+	Code        string
+	Type        string
+	IsSubField  bool
+	Table       string
+}
 
 func getEncoding() encoding.Encoding {
 	switch config.encoding {
@@ -51,9 +60,11 @@ func getEncoding() encoding.Encoding {
 
 func main() {
 	var colNames string
-	
+
 	flag.StringVar(&config.login, "u", "", "Login name")
 	flag.StringVar(&config.password, "p", "", "Password")
+	flag.StringVar(&config.basicAuthUser, "U", "", "Basic authentication user name")
+	flag.StringVar(&config.basicAuthPassword, "P", "", "Basic authentication password")
 	flag.StringVar(&config.domain, "d", "", "Domain name")
 	flag.StringVar(&config.apiToken, "t", "", "API token")
 	flag.Uint64Var(&config.appId, "a", 0, "App ID")
@@ -63,14 +74,14 @@ func main() {
 	flag.StringVar(&config.filePath, "f", "", "Input file path")
 	flag.BoolVar(&config.deleteAll, "D", false, "Delete all records before insert")
 	flag.StringVar(&config.encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature, 'sjis' or 'euc-jp'")
-	
+
 	flag.Parse()
 
 	if config.appId == 0 || (config.apiToken == "" && (config.domain == "" || config.login == "")) {
 		flag.PrintDefaults()
 		return
 	}
-	
+
 	if !strings.Contains(config.domain, ".") {
 		config.domain += ".cybozu.com"
 	}
@@ -79,9 +90,14 @@ func main() {
 		config.fields = strings.Split(colNames, ",")
 	}
 
-	
+
 	var app *kintone.App
-	
+
+	if config.basicAuthUser != "" && config.basicAuthPassword == "" {
+		fmt.Printf("Basic authentication password: ")
+		config.basicAuthPassword = string(gopass.GetPasswd())
+	}
+
 	if config.apiToken == "" {
 		if config.password == "" {
 			fmt.Printf("Password: ")
@@ -102,6 +118,10 @@ func main() {
 		}
 	}
 
+	if config.basicAuthUser != "" {
+		app.SetBasicAuth(config.basicAuthUser, config.basicAuthPassword)
+	}
+
 	var err error
 	if config.filePath == "" {
 		if config.format == "json" {
@@ -116,4 +136,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-

@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/cybozu/go-kintone"
+	"github.com/ryokdy/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -20,6 +20,40 @@ func getReader(file *os.File) io.Reader {
 		return file
 	}
 	return transform.NewReader(file, encoding.NewDecoder())
+}
+
+// set column information from fieldinfo
+func setColumn(code string, column *Column, fields map[string]*kintone.FieldInfo) {
+	// initialize values
+	column.Code = code
+	column.IsSubField = false
+	column.Table = ""
+
+	if code == "$id" {
+		column.Type = "__ID__"
+		return
+	} else {
+		// is this code the one of sub field?
+		for _, val := range fields {
+			if val.Code == code {
+				column.Type = val.Type
+				return
+			}
+			if val.Type == "SUBTABLE" {
+				for _, subField := range val.Fields {
+					if subField.Code == code {
+						column.IsSubField = true
+						column.Type = subField.Type
+						column.Table = val.Code
+						return
+					}
+				}
+			}
+		}
+	}
+
+	// the code is not found
+	column.Type = "UNKNOWN"
 }
 
 func readCsv(app *kintone.App, filePath string) error {
@@ -34,8 +68,13 @@ func readCsv(app *kintone.App, filePath string) error {
 	head := true
 	updating := false
 	records := make([]*kintone.Record, 0, ROW_LIMIT)
-	var fieldTypes []string
-	fields := config.fields
+	var columns []Column
+
+	// retrieve field list
+	fields, err := getFields(app)
+	if err != nil {
+		return err
+	}
 
 	for {
 		row, err := reader.Read()
@@ -45,16 +84,18 @@ func readCsv(app *kintone.App, filePath string) error {
 			return err
 		}
 		//fmt.Printf("%#v", row)
-		if head && fields == nil {
-			fields =make([]string, len(row))
-			fieldTypes = make([]string, len(row))
+		if head && columns == nil {
+			columns =make([]Column, len(row))
 			for i, col := range row {
 				re := regexp.MustCompile("^(.*)\\[(.*)\\]$")
 				match := re.FindStringSubmatch(col)
 				if match != nil {
-					fields[i] = match[1]
-					fieldTypes[i] = match[2]
-					col = fields[i]
+					// for backward compatible
+					columns[i].Code = match[1]
+					columns[i].Type = match[2]
+					col = columns[i].Code
+				} else {
+					setColumn(col, &columns[i], fields)
 				}
 				if col == "$id" {
 					updating = true
@@ -65,21 +106,22 @@ func readCsv(app *kintone.App, filePath string) error {
 			var id uint64 = 0
 			var err error
 			record := make(map[string]interface{})
-			
+
 			for i, col := range row {
-				fieldName := fields[i]
+				fieldName := columns[i].Code
 				if fieldName == "$id" {
 					id, err = strconv.ParseUint(col, 10, 64)
 					if err != nil {
 						return fmt.Errorf("Invalid record ID: %v", col)
 					}
 				} else {
-					field := getField(fieldTypes[i], col, updating)
+					field := getField(columns[i].Type, col, updating)
 					if field != nil {
 						record[fieldName] = field
 					}
 				}
 			}
+
 			if updating {
 				records = append(records, kintone.NewRecordWithId(id, record))
 			} else {
@@ -113,6 +155,7 @@ func upsert(app *kintone.App, recs []*kintone.Record, updating bool)  error {
 	return err
 }
 
+// delete all records
 func deleteRecords(app *kintone.App) error {
 	var lastId uint64 = 0
 	for {
@@ -130,7 +173,7 @@ func deleteRecords(app *kintone.App) error {
 		if err != nil {
 			return err
 		}
-		
+
 		if len(records) < ROW_LIMIT {
 			break
 		}
@@ -259,6 +302,8 @@ func getField(fieldType string, value string, updating bool) interface{} {
 			}
 		}
 	case kintone.FT_SUBTABLE:
+		return nil
+	case "UNKNOWN":
 		return nil
 	}
 

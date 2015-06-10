@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cybozu/go-kintone"
+	"github.com/ryokdy/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -23,6 +23,14 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 	return records, nil
 }
 
+func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
+	fields, err := app.Fields()
+	if err != nil {
+		return nil, err
+	}
+	return fields, nil
+}
+
 func getWriter() io.Writer {
 	encoding := getEncoding()
 	if (encoding == nil) {
@@ -35,7 +43,7 @@ func writeJson(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter()
-	
+
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
@@ -45,7 +53,7 @@ func writeJson(app *kintone.App) error {
 		for _, record := range records {
 			if i > 0 {
 				fmt.Fprint(writer, ",\n")
-			}			
+			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
 			fmt.Fprint(writer, json)
@@ -64,34 +72,41 @@ func writeCsv(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter()
-	var fields []string
+	var columns []Column
+
+	// retrieve field list
+	fields, err := getFields(app)
+	if err != nil {
+		return err
+	}
 
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
-		
+
 		for _, record := range records {
 			if i == 0 {
+				// write csv header
 				if config.fields == nil {
 					tmpFields := make([]string, 0, len(record.Fields))
 					for key, _ := range record.Fields {
 						tmpFields = append(tmpFields, key)
 					}
 					sort.Strings(tmpFields)
-					fields = make([]string, 0, len(record.Fields) + 1);
-					fields = append(fields, "$id")
-					fields = append(fields, tmpFields...);
+					columns = make([]string, 0, len(record.Fields) + 1);
+					columns = append(columns, "$id")
+					columns = append(columns, tmpFields...);
 				} else {
-					fields = config.fields
+					columns = config.fields
 				}
 				j := 0
 				for _, f := range fields {
 					if j > 0 {
 						fmt.Fprint(writer, ",");
 					}
-					var col string
+					/*var col string
 					if f == "$id" {
 						col = kintone.FT_ID
 					} else if f == "$revision" {
@@ -99,14 +114,15 @@ func writeCsv(app *kintone.App) error {
 					} else {
 						col = getType(record.Fields[f])
 					}
-					fmt.Fprint(writer, "\"" + f + "[" + col + "]\"")
-					j++;			
+					fmt.Fprint(writer, "\"" + f + "[" + col + "]\"")*/
+					fmt.Fprint(writer, "\"" + f + "\"")
+					j++;
 				}
 				fmt.Fprint(writer, "\r\n");
 			}
 			j := 0
-			for _, f := range fields {
-				field := record.Fields[f]
+			for _, f := range columns {
+				field := record.columns[f]
 				if j > 0 {
 					fmt.Fprint(writer, ",");
 				}
@@ -117,7 +133,7 @@ func writeCsv(app *kintone.App) error {
 				} else {
 					fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
 				}
-				j++;			
+				j++;
 			}
 			fmt.Fprint(writer, "\r\n");
 			i++;
@@ -292,4 +308,3 @@ func toString(f interface{}, delimiter string) string {
 	}
 	return ""
 }
-	

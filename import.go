@@ -118,6 +118,7 @@ func readCsv(app *kintone.App, filePath string) error {
 							if err != nil {
 								return fmt.Errorf("Invalid record ID: %v", col)
 							}
+						} else if column.Code == "$revision" {
 						} else {
 							field := getField(column.Type, col, updating)
 							if field != nil {
@@ -127,13 +128,13 @@ func readCsv(app *kintone.App, filePath string) error {
 					}
 				}
 				for key, table := range tables {
-					var sr []*kintone.Record
 					if record[key] == nil {
-						sr = make([]*kintone.Record, 0)
-						record[key] = kintone.SubTableField(sr)
+						record[key] = getField(kintone.FT_SUBTABLE, "", false)
 					}
-					sr = record[key].(kintone.SubTableField)
-					record[key] = append(sr, kintone.NewRecord(table))
+
+					stf := record[key].(kintone.SubTableField)
+					stf = append(stf, kintone.NewRecord(table))
+					record[key] = stf
 				}
 
 				if !hasTable {
@@ -331,7 +332,8 @@ func getField(fieldType string, value string, updating bool) interface{} {
 			}
 		}
 	case kintone.FT_SUBTABLE:
-		return nil
+		sr := make([]*kintone.Record, 0)
+		return kintone.SubTableField(sr)
 	case "UNKNOWN":
 		return nil
 	}

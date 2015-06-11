@@ -41,6 +41,77 @@ type Column struct {
 	Table       string
 }
 
+type Columns []*Column
+
+func (p Columns) Len() int {
+  return len(p)
+}
+
+func (p Columns) Swap(i, j int) {
+  p[i], p[j] = p[j], p[i]
+}
+
+func (p Columns) Less(i, j int) bool {
+	p1 := p[i]
+	code1 := p1.Code
+	if p1.IsSubField {
+		code1 = p1.Table
+	}
+	p2 := p[j]
+	code2 := p2.Code
+	if p2.IsSubField {
+		code2 = p2.Table
+	}
+	if code1 == code2 {
+		return p[i].Code < p[j].Code
+	}
+	return code1 < code2
+}
+
+func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
+	fields, err := app.Fields()
+	if err != nil {
+		return nil, err
+	}
+	return fields, nil
+}
+
+// set column information from fieldinfo
+func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
+	// initialize values
+	column := Column{Code: code, IsSubField: false, Table: ""}
+
+	if code == "$id" {
+		column.Type = kintone.FT_ID
+		return &column
+	} else if code == "$revision" {
+		column.Type = kintone.FT_REVISION
+		return &column
+	} else {
+		// is this code the one of sub field?
+		for _, val := range fields {
+			if val.Code == code {
+				column.Type = val.Type
+				return &column
+			}
+			if val.Type == kintone.FT_SUBTABLE {
+				for _, subField := range val.Fields {
+					if subField.Code == code {
+						column.IsSubField = true
+						column.Type = subField.Type
+						column.Table = val.Code
+						return &column
+					}
+				}
+			}
+		}
+	}
+
+	// the code is not found
+	column.Type = "UNKNOWN"
+	return &column
+}
+
 func getEncoding() encoding.Encoding {
 	switch config.encoding {
 	case "utf-16":

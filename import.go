@@ -22,38 +22,21 @@ func getReader(file *os.File) io.Reader {
 	return transform.NewReader(file, encoding.NewDecoder())
 }
 
-// set column information from fieldinfo
-func setColumn(code string, column *Column, fields map[string]*kintone.FieldInfo) {
-	// initialize values
-	column.Code = code
-	column.IsSubField = false
-	column.Table = ""
-
-	if code == "$id" {
-		column.Type = "__ID__"
+func addSubField(column *Column, col string, tables map[string]map[string]interface{}) {
+	if len(col) == 0 {
 		return
-	} else {
-		// is this code the one of sub field?
-		for _, val := range fields {
-			if val.Code == code {
-				column.Type = val.Type
-				return
-			}
-			if val.Type == "SUBTABLE" {
-				for _, subField := range val.Fields {
-					if subField.Code == code {
-						column.IsSubField = true
-						column.Type = subField.Type
-						column.Table = val.Code
-						return
-					}
-				}
-			}
-		}
 	}
 
-	// the code is not found
-	column.Type = "UNKNOWN"
+	table := tables[column.Table]
+	if table == nil {
+		table = make(map[string]interface{})
+		tables[column.Table] = table
+	}
+
+	field := getField(column.Type, col, true)
+	if field != nil {
+		table[column.Code] = field
+	}
 }
 
 func readCsv(app *kintone.App, filePath string) error {
@@ -68,7 +51,7 @@ func readCsv(app *kintone.App, filePath string) error {
 	head := true
 	updating := false
 	records := make([]*kintone.Record, 0, ROW_LIMIT)
-	var columns []Column
+	var columns Columns
 
 	// retrieve field list
 	fields, err := getFields(app)
@@ -76,26 +59,39 @@ func readCsv(app *kintone.App, filePath string) error {
 		return err
 	}
 
+	hasTable := false
+	var peeked *[]string
 	for {
-		row, err := reader.Read()
-		if err == io.EOF {
-			break
-		} else if err != nil {
-			return err
+		var err error
+		var row []string
+		if peeked == nil {
+			row, err = reader.Read()
+			if err == io.EOF {
+				break
+			} else if err != nil {
+				return err
+			}
+		} else {
+			row = *peeked
+			peeked = nil
 		}
 		//fmt.Printf("%#v", row)
 		if head && columns == nil {
-			columns =make([]Column, len(row))
-			for i, col := range row {
+			columns = make([]*Column, 0)
+			for _, col := range row {
 				re := regexp.MustCompile("^(.*)\\[(.*)\\]$")
 				match := re.FindStringSubmatch(col)
 				if match != nil {
 					// for backward compatible
-					columns[i].Code = match[1]
-					columns[i].Type = match[2]
-					col = columns[i].Code
+					column := &Column{Code: match[1], Type: match[2]}
+					columns = append(columns, column)
+					col = column.Code
 				} else {
-					setColumn(col, &columns[i], fields)
+					column := getColumn(col, fields)
+					if column.IsSubField {
+						hasTable = true
+					}
+					columns = append(columns, column)
 				}
 				if col == "$id" {
 					updating = true
@@ -107,18 +103,51 @@ func readCsv(app *kintone.App, filePath string) error {
 			var err error
 			record := make(map[string]interface{})
 
-			for i, col := range row {
-				fieldName := columns[i].Code
-				if fieldName == "$id" {
-					id, err = strconv.ParseUint(col, 10, 64)
-					if err != nil {
-						return fmt.Errorf("Invalid record ID: %v", col)
+			for {
+				tables := make(map[string]map[string]interface{})
+				for i, col := range row {
+					column := columns[i]
+					if column.IsSubField {
+						addSubField(column, col, tables)
+					} else {
+						if hasTable && row[0] != "*" {
+							continue
+						}
+						if column.Code == "$id" {
+							id, err = strconv.ParseUint(col, 10, 64)
+							if err != nil {
+								return fmt.Errorf("Invalid record ID: %v", col)
+							}
+						} else {
+							field := getField(column.Type, col, updating)
+							if field != nil {
+								record[column.Code] = field
+							}
+						}
 					}
-				} else {
-					field := getField(columns[i].Type, col, updating)
-					if field != nil {
-						record[fieldName] = field
+				}
+				for key, table := range tables {
+					var sr []*kintone.Record
+					if record[key] == nil {
+						sr = make([]*kintone.Record, 0)
+						record[key] = kintone.SubTableField(sr)
 					}
+					sr = record[key].(kintone.SubTableField)
+					record[key] = append(sr, kintone.NewRecord(table))
+				}
+
+				if !hasTable {
+					break
+				}
+				row, err = reader.Read()
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					return err
+				}
+				if len(row) > 0 && row[0] == "*" {
+					peeked = &row
+					break
 				}
 			}
 

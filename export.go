@@ -70,6 +70,9 @@ func makeColumns(fields map[string]*kintone.FieldInfo) (Columns) {
 	columns = append(columns, column)
 
 	for _, val := range fields {
+		if val.Code == "" {
+			continue
+		}
 		if val.Type == kintone.FT_SUBTABLE {
 			for _, subField := range val.Fields {
 				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val.Code}

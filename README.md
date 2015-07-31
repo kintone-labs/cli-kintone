@@ -5,7 +5,7 @@ cli-kintone is a command line utility for kintone.
 
 ## Version
 
-0.2
+0.3
 
 ## How to Build
 
@@ -21,7 +21,7 @@ Getting the source code
 
 Install dependencies
 
-    $ go get github.com/cybozu/go-kintone
+    $ go get github.com/kintone/go-kintone
     $ go get github.com/howeyc/gopass
     $ go get golang.org/x/text/encoding
 
@@ -43,6 +43,8 @@ https://github.com/kintone/cli-kintone/releases
 ## Usage
 
     -D=false: Delete all records before insert
+    -P="": Basic authentication password
+    -U="": Basic authentication user name
     -a=0: App ID
     -c="": Field names (comma separated)
     -d="": Domain name
@@ -53,7 +55,7 @@ https://github.com/kintone/cli-kintone/releases
     -q="": Query string
     -t="": API token
     -u="": Login name
-    
+
 ## Examples
 
 Export all columns from an app.

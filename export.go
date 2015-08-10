@@ -4,11 +4,10 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"sort"
 	"strings"
 	"time"
-
-	"github.com/cybozu/go-kintone"
+	"sort"
+	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -16,7 +15,7 @@ import (
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, error) {
 
 	newQuery := config.query + fmt.Sprintf(" limit %v offset %v", ROW_LIMIT, offset)
-	records, err := app.GetRecords(config.fields, newQuery)
+	records, err := app.GetRecords(fields, newQuery)
 	if err != nil {
 		return nil, err
 	}
@@ -35,7 +34,7 @@ func writeJson(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter()
-	
+
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
@@ -45,7 +44,7 @@ func writeJson(app *kintone.App) error {
 		for _, record := range records {
 			if i > 0 {
 				fmt.Fprint(writer, ",\n")
-			}			
+			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
 			fmt.Fprint(writer, json)
@@ -60,67 +59,162 @@ func writeJson(app *kintone.App) error {
 	return nil
 }
 
+func makeColumns(fields map[string]*kintone.FieldInfo) (Columns) {
+	columns := make([]*Column, 0)
+
+	var column *Column
+
+	column = &Column{Code: "$id", Type: kintone.FT_ID}
+	columns = append(columns, column)
+	column = &Column{Code: "$revision", Type: kintone.FT_REVISION}
+	columns = append(columns, column)
+
+	for _, val := range fields {
+		if val.Code == "" {
+			continue
+		}
+		if val.Type == kintone.FT_SUBTABLE {
+			for _, subField := range val.Fields {
+				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val.Code}
+				columns = append(columns, column)
+			}
+		} else {
+			column := &Column{Code: val.Code, Type: val.Type}
+			columns = append(columns, column)
+		}
+	}
+
+	return columns
+}
+
+func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []string) (Columns) {
+	columns := make([]*Column, 0)
+
+	for _, val := range partialFields {
+		column := getColumn(val, fields)
+		if column.Type == kintone.FT_SUBTABLE {
+			// append all sub fields
+			field := fields[val]
+
+			for _, subField := range field.Fields {
+				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val}
+				columns = append(columns, column)
+			}
+		} else {
+			columns = append(columns, column)
+		}
+	}
+
+	return columns
+}
+
+func getSubTableRowCount(record *kintone.Record, columns []*Column) int {
+	var ret = 1
+	for _, c := range columns {
+		if c.IsSubField {
+			subTable := record.Fields[c.Table].(kintone.SubTableField)
+
+			count := len(subTable)
+			if count > ret {
+				ret = count
+			}
+		}
+	}
+
+	return ret
+}
+
+func hasSubTable(columns []*Column) bool {
+	for _, c := range columns {
+		if c.IsSubField {
+			return true
+		}
+	}
+	return false
+}
+
 func writeCsv(app *kintone.App) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter()
-	var fields []string
+	var columns Columns
+
+	// retrieve field list
+	fields, err := getFields(app)
+	if err != nil {
+		return err
+	}
 
 	for ;;offset += ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
-		
+
+		hasTable := false
 		for _, record := range records {
 			if i == 0 {
+				// write csv header
 				if config.fields == nil {
-					tmpFields := make([]string, 0, len(record.Fields))
-					for key, _ := range record.Fields {
-						tmpFields = append(tmpFields, key)
-					}
-					sort.Strings(tmpFields)
-					fields = make([]string, 0, len(record.Fields) + 1);
-					fields = append(fields, "$id")
-					fields = append(fields, tmpFields...);
+					columns = makeColumns(fields)
 				} else {
-					fields = config.fields
+					columns = makePartialColumns(fields, config.fields)
 				}
+				sort.Sort(columns)
 				j := 0
-				for _, f := range fields {
+				hasTable = hasSubTable(columns)
+				if hasTable {
+					fmt.Fprint(writer, "*");
+					j++
+				}
+				for _, f := range columns {
 					if j > 0 {
 						fmt.Fprint(writer, ",");
 					}
-					var col string
-					if f == "$id" {
-						col = kintone.FT_ID
-					} else if f == "$revision" {
-						col =kintone.FT_REVISION
-					} else {
-						col = getType(record.Fields[f])
-					}
-					fmt.Fprint(writer, "\"" + f + "[" + col + "]\"")
-					j++;			
+					fmt.Fprint(writer, "\"" + f.Code + "\"")
+					j++
 				}
 				fmt.Fprint(writer, "\r\n");
 			}
-			j := 0
-			for _, f := range fields {
-				field := record.Fields[f]
-				if j > 0 {
-					fmt.Fprint(writer, ",");
+
+			// determine subtable's row count
+			rowNum := getSubTableRowCount(record, columns)
+
+			for j := 0; j < rowNum; j++ {
+				k := 0
+				if hasTable {
+					if j == 0 {
+						fmt.Fprint(writer, "*");
+					}
+					k++
 				}
-				if f == "$id" {
-					fmt.Fprintf(writer, "\"%d\"",  record.Id())
-				} else if f == "$revision" {
-					fmt.Fprintf(writer, "\"%d\"",  record.Revision())
-				} else {
-					fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
+
+				for _, f := range columns {
+					if k > 0 {
+						fmt.Fprint(writer, ",");
+					}
+
+					if f.Code == "$id" {
+						fmt.Fprintf(writer, "\"%d\"",  record.Id())
+					} else if f.Code == "$revision" {
+						fmt.Fprintf(writer, "\"%d\"",  record.Revision())
+					} else if f.IsSubField {
+						table := record.Fields[f.Table].(kintone.SubTableField)
+						if j < len(table) {
+							subField := table[j].Fields[f.Code]
+							fmt.Fprint(writer, "\"" + escapeCol(toString(subField, "\n")) + "\"")
+						}
+					} else {
+						field := record.Fields[f.Code]
+						if field != nil {
+							fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
+						}
+					}
+					k++
 				}
-				j++;			
+				fmt.Fprint(writer, "\r\n");
 			}
-			fmt.Fprint(writer, "\r\n");
-			i++;
+			i++
 		}
 		if len(records) < ROW_LIMIT {
 			break
@@ -292,4 +386,3 @@ func toString(f interface{}, delimiter string) string {
 	}
 	return ""
 }
-	

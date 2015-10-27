@@ -50,7 +50,7 @@ func readCsv(app *kintone.App, filePath string) error {
 
 	head := true
 	updating := false
-	records := make([]*kintone.Record, 0, ROW_LIMIT)
+	records := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
 	var columns Columns
 
 	// retrieve field list
@@ -157,9 +157,9 @@ func readCsv(app *kintone.App, filePath string) error {
 			} else {
 				records = append(records, kintone.NewRecord(record))
 			}
-			if len(records) >= ROW_LIMIT {
+			if len(records) >= IMPORT_ROW_LIMIT {
 				upsert(app, records[:], updating)
-				records = make([]*kintone.Record, 0, ROW_LIMIT)
+				records = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
 			}
 		}
 	}
@@ -189,7 +189,7 @@ func upsert(app *kintone.App, recs []*kintone.Record, updating bool)  error {
 func deleteRecords(app *kintone.App) error {
 	var lastId uint64 = 0
 	for {
-		ids := make([]uint64, 0, ROW_LIMIT)
+		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
 		records, err := getRecords(app, []string{"$id"}, 0)
 		if err != nil {
 			return err
@@ -204,7 +204,7 @@ func deleteRecords(app *kintone.App) error {
 			return err
 		}
 
-		if len(records) < ROW_LIMIT {
+		if len(records) < IMPORT_ROW_LIMIT {
 			break
 		}
 		if lastId == ids[0] {

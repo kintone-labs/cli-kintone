@@ -14,7 +14,7 @@ import (
 
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, error) {
 
-	newQuery := config.query + fmt.Sprintf(" limit %v offset %v", ROW_LIMIT, offset)
+	newQuery := config.query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
 	records, err := app.GetRecords(fields, newQuery)
 	if err != nil {
 		return nil, err
@@ -36,7 +36,7 @@ func writeJson(app *kintone.App) error {
 	writer := getWriter()
 
 	fmt.Fprint(writer, "{\"records\": [\n")
-	for ;;offset += ROW_LIMIT {
+	for ;;offset += EXPORT_ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
@@ -50,7 +50,7 @@ func writeJson(app *kintone.App) error {
 			fmt.Fprint(writer, json)
 			i += 1
 		}
-		if len(records) < ROW_LIMIT {
+		if len(records) < EXPORT_ROW_LIMIT {
 			break
 		}
 	}
@@ -145,13 +145,13 @@ func writeCsv(app *kintone.App) error {
 		return err
 	}
 
-	for ;;offset += ROW_LIMIT {
+	hasTable := false
+	for ;;offset += EXPORT_ROW_LIMIT {
 		records, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
 
-		hasTable := false
 		for _, record := range records {
 			if i == 0 {
 				// write csv header
@@ -216,7 +216,7 @@ func writeCsv(app *kintone.App) error {
 			}
 			i++
 		}
-		if len(records) < ROW_LIMIT {
+		if len(records) < EXPORT_ROW_LIMIT {
 			break
 		}
 	}

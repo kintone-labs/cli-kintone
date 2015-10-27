@@ -5,7 +5,7 @@ cli-kintone is a command line utility for kintone.
 
 ## Version
 
-0.3
+0.4
 
 ## How to Build
 

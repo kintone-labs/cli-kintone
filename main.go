@@ -32,7 +32,8 @@ type Configure struct {
 
 var config Configure
 
-const ROW_LIMIT = 100
+const IMPORT_ROW_LIMIT = 100
+const EXPORT_ROW_LIMIT = 500
 
 type Column struct {
 	Code        string

@@ -33,7 +33,7 @@ func addSubField(column *Column, col string, tables map[string]map[string]interf
 		tables[column.Table] = table
 	}
 
-	field := getField(column.Type, col, true)
+	field := getField(column.Type, col)
 	if field != nil {
 		table[column.Code] = field
 	}
@@ -49,14 +49,23 @@ func readCsv(app *kintone.App, filePath string) error {
 	reader := csv.NewReader(getReader(file))
 
 	head := true
-	updating := false
-	records := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+	recordsInsert := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+	recordsUpdate := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+
 	var columns Columns
 
 	// retrieve field list
 	fields, err := getFields(app)
 	if err != nil {
 		return err
+	}
+
+	if config.deleteAll {
+		err = deleteRecords(app)
+		if err != nil {
+			return err
+		}
+		config.deleteAll = false
 	}
 
 	hasTable := false
@@ -93,9 +102,6 @@ func readCsv(app *kintone.App, filePath string) error {
 					}
 					columns = append(columns, column)
 				}
-				if col == "$id" {
-					updating = true
-				}
 			}
 			head = false
 		} else {
@@ -114,13 +120,12 @@ func readCsv(app *kintone.App, filePath string) error {
 							continue
 						}
 						if column.Code == "$id" {
-							id, err = strconv.ParseUint(col, 10, 64)
-							if err != nil {
-								return fmt.Errorf("Invalid record ID: %v", col)
+							if col != "" {
+								id, err = strconv.ParseUint(col, 10, 64)
 							}
 						} else if column.Code == "$revision" {
 						} else {
-							field := getField(column.Type, col, updating)
+							field := getField(column.Type, col)
 							if field != nil {
 								record[column.Code] = field
 							}
@@ -129,7 +134,7 @@ func readCsv(app *kintone.App, filePath string) error {
 				}
 				for key, table := range tables {
 					if record[key] == nil {
-						record[key] = getField(kintone.FT_SUBTABLE, "", false)
+						record[key] = getField(kintone.FT_SUBTABLE, "")
 					}
 
 					stf := record[key].(kintone.SubTableField)
@@ -152,35 +157,61 @@ func readCsv(app *kintone.App, filePath string) error {
 				}
 			}
 
-			if updating {
-				records = append(records, kintone.NewRecordWithId(id, record))
+			if id != 0 {
+				setRecordUpdatable(record, columns)
+				recordsUpdate = append(recordsUpdate, kintone.NewRecordWithId(id, record))
+				if len(recordsUpdate) >= IMPORT_ROW_LIMIT {
+					update(app, recordsUpdate[:])
+					recordsUpdate = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+				}
 			} else {
-				records = append(records, kintone.NewRecord(record))
-			}
-			if len(records) >= IMPORT_ROW_LIMIT {
-				upsert(app, records[:], updating)
-				records = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+				recordsInsert = append(recordsInsert, kintone.NewRecord(record))
+				if len(recordsInsert) >= IMPORT_ROW_LIMIT {
+					insert(app, recordsInsert[:])
+					recordsInsert = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
+				}
 			}
 		}
 	}
-	if len(records) > 0 {
-		return upsert(app, records[:], updating)
+	if len(recordsUpdate) > 0 {
+		err = update(app, recordsUpdate[:])
+		if err != nil {
+			return err
+		}
+	}
+	if len(recordsInsert) > 0 {
+		err = insert(app, recordsInsert[:])
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func upsert(app *kintone.App, recs []*kintone.Record, updating bool)  error {
-	var err error
-	if updating {
-		err = app.UpdateRecords(recs, true)
-	} else {
-		if config.deleteAll {
-			deleteRecords(app)
-			config.deleteAll = false
+func setRecordUpdatable(record map[string]interface{}, columns Columns) {
+	for _, col := range columns {
+		switch col.Type {
+		case
+			kintone.FT_CREATOR,
+			kintone.FT_MODIFIER,
+			kintone.FT_CTIME,
+			kintone.FT_MTIME:
+			delete(record, col.Code)
 		}
-		_, err = app.AddRecords(recs)
 	}
+}
+
+func insert(app *kintone.App, recs []*kintone.Record)  error {
+	var err error
+		_, err = app.AddRecords(recs)
+
+	return err
+}
+
+func update(app *kintone.App, recs []*kintone.Record)  error {
+	var err error
+	err = app.UpdateRecords(recs, true)
 
 	return err
 }
@@ -190,10 +221,17 @@ func deleteRecords(app *kintone.App) error {
 	var lastId uint64 = 0
 	for {
 		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
-		records, err := getRecords(app, []string{"$id"}, 0)
+
+		query := fmt.Sprintf("limit %v", IMPORT_ROW_LIMIT)
+		records, err := app.GetRecords([]string{"$id"}, query)
 		if err != nil {
 			return err
 		}
+
+		if len(records) == 0 {
+			break
+		}
+
 		for _, record := range records {
 			id := record.Id()
 			ids = append(ids, id)
@@ -217,7 +255,7 @@ func deleteRecords(app *kintone.App) error {
 	return nil
 }
 
-func getField(fieldType string, value string, updating bool) interface{} {
+func getField(fieldType string, value string) interface{} {
 	switch fieldType {
 	case kintone.FT_SINGLE_LINE_TEXT:
 		return kintone.SingleLineTextField(value)
@@ -302,34 +340,18 @@ func getField(fieldType string, value string, updating bool) interface{} {
 	case kintone.FT_ASSIGNEE:
 		return nil
 	case kintone.FT_CREATOR:
-		if updating {
-			return nil
-		} else {
-			return kintone.CreatorField{Code: value}
-		}
+		return kintone.CreatorField{Code: value}
 	case kintone.FT_MODIFIER:
-		if updating {
-			return nil
-		} else {
-			return kintone.ModifierField{Code: value}
-		}
+		return kintone.ModifierField{Code: value}
 	case kintone.FT_CTIME:
-		if updating {
-			return nil
-		} else {
-			dt, err := time.Parse(time.RFC3339, value)
-			if err == nil {
-				return kintone.CreationTimeField(dt)
-			}
+		dt, err := time.Parse(time.RFC3339, value)
+		if err == nil {
+			return kintone.CreationTimeField(dt)
 		}
 	case kintone.FT_MTIME:
-		if updating {
-			return nil
-		} else {
-			dt, err := time.Parse(time.RFC3339, value)
-			if err == nil {
-				return kintone.ModificationTimeField(dt)
-			}
+		dt, err := time.Parse(time.RFC3339, value)
+		if err == nil {
+			return kintone.ModificationTimeField(dt)
 		}
 	case kintone.FT_SUBTABLE:
 		sr := make([]*kintone.Record, 0)

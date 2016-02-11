@@ -28,6 +28,7 @@ type Configure struct {
 	filePath string
 	deleteAll bool
 	encoding string
+	guestSpaceId uint64
 }
 
 var config Configure
@@ -140,6 +141,7 @@ func main() {
 	flag.StringVar(&config.domain, "d", "", "Domain name")
 	flag.StringVar(&config.apiToken, "t", "", "API token")
 	flag.Uint64Var(&config.appId, "a", 0, "App ID")
+	flag.Uint64Var(&config.guestSpaceId, "g", 0, "Guest Space ID")
 	flag.StringVar(&config.format, "o", "csv", "Output format: 'json' or 'csv'(default)")
 	flag.StringVar(&config.query, "q", "", "Query string")
 	flag.StringVar(&colNames, "c", "", "Field names (comma separated)")
@@ -177,16 +179,18 @@ func main() {
 		}
 
 		app = &kintone.App{
-			Domain:	  config.domain,
-			User:	  config.login,
-			Password: config.password,
-			AppId:	  config.appId,
+			Domain:       config.domain,
+			User:         config.login,
+			Password:     config.password,
+			AppId:        config.appId,
+			GuestSpaceId: config.guestSpaceId,
 		}
 	} else {
 		app = &kintone.App{
-			Domain:	  config.domain,
-			ApiToken: config.apiToken,
-			AppId:	  config.appId,
+			Domain:       config.domain,
+			ApiToken:     config.apiToken,
+			AppId:        config.appId,
+			GuestSpaceId: config.guestSpaceId,
 		}
 	}
 

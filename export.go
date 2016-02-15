@@ -6,7 +6,7 @@ import (
 	"os"
 	"strings"
 	"time"
-	"sort"
+	//"sort"
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
@@ -92,6 +92,10 @@ func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []st
 
 	for _, val := range partialFields {
 		column := getColumn(val, fields)
+
+		if column.Type == "UNKNOWN" || column.IsSubField {
+			continue
+		}
 		if column.Type == kintone.FT_SUBTABLE {
 			// append all sub fields
 			field := fields[val]
@@ -160,7 +164,7 @@ func writeCsv(app *kintone.App) error {
 				} else {
 					columns = makePartialColumns(fields, config.fields)
 				}
-				sort.Sort(columns)
+				//sort.Sort(columns)
 				j := 0
 				hasTable = hasSubTable(columns)
 				if hasTable {

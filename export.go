@@ -108,7 +108,6 @@ func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []st
 			columns = append(columns, column)
 		}
 	}
-
 	return columns
 }
 
@@ -138,7 +137,7 @@ func hasSubTable(columns []*Column) bool {
 }
 
 func writeCsv(app *kintone.App) error {
-	i := 0
+	i := uint64(0)
 	offset := int64(0)
 	writer := getWriter()
 	var columns Columns
@@ -180,6 +179,10 @@ func writeCsv(app *kintone.App) error {
 				}
 				fmt.Fprint(writer, "\r\n");
 			}
+			rowId := record.Id()
+			if rowId == 0 {
+				rowId = i
+			}
 
 			// determine subtable's row count
 			rowNum := getSubTableRowCount(record, columns)
@@ -206,11 +209,25 @@ func writeCsv(app *kintone.App) error {
 						table := record.Fields[f.Table].(kintone.SubTableField)
 						if j < len(table) {
 							subField := table[j].Fields[f.Code]
+							if config.fileDir != "" && f.Type == kintone.FT_FILE {
+								dir := fmt.Sprintf("%s-%d-%d", f.Code, rowId, j)
+								err := downloadFile(app, subField, dir)
+								if err != nil {
+									return err
+								}
+							}
 							fmt.Fprint(writer, "\"" + escapeCol(toString(subField, "\n")) + "\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
 						if field != nil {
+							if config.fileDir != "" && f.Type == kintone.FT_FILE {
+								dir := fmt.Sprintf("%s-%d", f.Code, rowId)
+								err := downloadFile(app, field, dir)
+								if err != nil {
+									return err
+								}
+							}
 							fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
 						}
 					}
@@ -223,6 +240,54 @@ func writeCsv(app *kintone.App) error {
 		if len(records) < EXPORT_ROW_LIMIT {
 			break
 		}
+	}
+
+	return nil
+}
+
+func downloadFile(app *kintone.App, field interface{}, dir string) error {
+	v, ok := field.(kintone.FileField)
+	if !ok {
+		return nil
+	}
+
+	fileDir := fmt.Sprintf("%s/%s", config.fileDir, dir)
+	if err := os.MkdirAll(fileDir, 0777); err != nil {
+    return err
+  }
+
+	for idx, file := range v {
+		path := fmt.Sprintf("%s/%s/%s", config.fileDir, dir, file.Name)
+		data, err := app.Download(file.FileKey)
+		if err != nil {
+			return err
+		}
+
+		fo, err := os.Create(path)
+    if err != nil {
+      return err
+    }
+    defer fo.Close()
+
+    // make a buffer to keep chunks that are read
+    buf := make([]byte, 256 * 1024)
+    for {
+      // read a chunk
+      n, err := data.Reader.Read(buf)
+      if err != nil && err != io.EOF {
+        return err
+      }
+      if n == 0 {
+        break
+      }
+
+      // write a chunk
+      if _, err := fo.Write(buf[:n]); err != nil {
+        return err
+      }
+    }
+
+		v[idx].Name = fmt.Sprintf("%s/%s", dir, file.Name)
 	}
 
 	return nil

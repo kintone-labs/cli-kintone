@@ -29,6 +29,7 @@ type Configure struct {
 	deleteAll bool
 	encoding string
 	guestSpaceId uint64
+	fileDir string
 }
 
 var config Configure
@@ -148,6 +149,7 @@ func main() {
 	flag.StringVar(&config.filePath, "f", "", "Input file path")
 	flag.BoolVar(&config.deleteAll, "D", false, "Delete all records before insert")
 	flag.StringVar(&config.encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature, 'sjis' or 'euc-jp'")
+	flag.StringVar(&config.fileDir, "b", "", "Attachment file directory")
 
 	flag.Parse()
 

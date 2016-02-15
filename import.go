@@ -9,6 +9,7 @@ import (
 	"strings"
 	"strconv"
 	"time"
+	"path"
 
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
@@ -22,9 +23,9 @@ func getReader(file *os.File) io.Reader {
 	return transform.NewReader(file, encoding.NewDecoder())
 }
 
-func addSubField(column *Column, col string, tables map[string]map[string]interface{}) {
+func addSubField(app *kintone.App, column *Column, col string, tables map[string]map[string]interface{}) error {
 	if len(col) == 0 {
-		return
+		return nil
 	}
 
 	table := tables[column.Table]
@@ -33,10 +34,21 @@ func addSubField(column *Column, col string, tables map[string]map[string]interf
 		tables[column.Table] = table
 	}
 
-	field := getField(column.Type, col)
-	if field != nil {
-		table[column.Code] = field
+	if column.Type == kintone.FT_FILE {
+		field, err := uploadFiles(app, col)
+		if err != nil {
+			return err
+		}
+		if field != nil {
+			table[column.Code] = field
+		}
+	} else {
+		field := getField(column.Type, col)
+		if field != nil {
+			table[column.Code] = field
+		}
 	}
+	return nil
 }
 
 func readCsv(app *kintone.App, filePath string) error {
@@ -114,7 +126,10 @@ func readCsv(app *kintone.App, filePath string) error {
 				for i, col := range row {
 					column := columns[i]
 					if column.IsSubField {
-						addSubField(column, col, tables)
+						err := addSubField(app, column, col, tables)
+						if err != nil {
+							return err
+						}
 					} else {
 						if hasTable && row[0] != "*" {
 							continue
@@ -124,6 +139,15 @@ func readCsv(app *kintone.App, filePath string) error {
 								id, err = strconv.ParseUint(col, 10, 64)
 							}
 						} else if column.Code == "$revision" {
+
+						} else if column.Type == kintone.FT_FILE {
+							field, err := uploadFiles(app, col)
+							if err != nil {
+								return err
+							}
+							if field != nil {
+								record[column.Code] = field
+							}
 						} else {
 							field := getField(column.Type, col)
 							if field != nil {
@@ -202,9 +226,40 @@ func setRecordUpdatable(record map[string]interface{}, columns Columns) {
 	}
 }
 
+func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
+	value = strings.TrimSpace(value)
+	if config.fileDir == "" || value == "" {
+		return nil, nil
+	}
+
+	files := strings.Split(value, "\n")
+	var ret kintone.FileField = []kintone.File{}
+	for _, file := range files {
+		path := fmt.Sprintf("%s%c%s", config.fileDir, os.PathSeparator, file)
+		fileKey, err := uploadFile(app, path)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, kintone.File{FileKey: fileKey})
+	}
+	return ret, nil
+}
+
+func uploadFile(app *kintone.App, filePath string) (string, error) {
+
+	fi, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer fi.Close()
+
+	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
+	return fileKey, err
+}
+
 func insert(app *kintone.App, recs []*kintone.Record)  error {
 	var err error
-		_, err = app.AddRecords(recs)
+	_, err = app.AddRecords(recs)
 
 	return err
 }

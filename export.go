@@ -209,7 +209,7 @@ func writeCsv(app *kintone.App) error {
 						table := record.Fields[f.Table].(kintone.SubTableField)
 						if j < len(table) {
 							subField := table[j].Fields[f.Code]
-							if config.fileDir != "" && f.Type == kintone.FT_FILE {
+							if f.Type == kintone.FT_FILE {
 								dir := fmt.Sprintf("%s-%d-%d", f.Code, rowId, j)
 								err := downloadFile(app, subField, dir)
 								if err != nil {
@@ -221,7 +221,7 @@ func writeCsv(app *kintone.App) error {
 					} else {
 						field := record.Fields[f.Code]
 						if field != nil {
-							if config.fileDir != "" && f.Type == kintone.FT_FILE {
+							if j == 0 && f.Type == kintone.FT_FILE {
 								dir := fmt.Sprintf("%s-%d", f.Code, rowId)
 								err := downloadFile(app, field, dir)
 								if err != nil {
@@ -246,18 +246,26 @@ func writeCsv(app *kintone.App) error {
 }
 
 func downloadFile(app *kintone.App, field interface{}, dir string) error {
+	if config.fileDir == "" {
+		return nil
+	}
+
 	v, ok := field.(kintone.FileField)
 	if !ok {
 		return nil
 	}
 
-	fileDir := fmt.Sprintf("%s/%s", config.fileDir, dir)
+	if len(v) == 0 {
+		return nil
+	}
+
+	fileDir := fmt.Sprintf("%s%c%s", config.fileDir, os.PathSeparator, dir)
 	if err := os.MkdirAll(fileDir, 0777); err != nil {
     return err
   }
 
 	for idx, file := range v {
-		path := fmt.Sprintf("%s/%s/%s", config.fileDir, dir, file.Name)
+		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, file.Name)
 		data, err := app.Download(file.FileKey)
 		if err != nil {
 			return err
@@ -287,7 +295,7 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
       }
     }
 
-		v[idx].Name = fmt.Sprintf("%s/%s", dir, file.Name)
+		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, file.Name)
 	}
 
 	return nil

@@ -49,7 +49,7 @@ https://github.com/kintone/cli-kintone/releases
     -b="": Attachment file directory
     -c="": Field names (comma separated)
     -d="": Domain name
-    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature, 'sjis' or 'euc-jp'
+    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'
     -f="": Input file path
     -g=0: Guest Space ID
     -o="csv": Output format: 'json' or 'csv'(default)

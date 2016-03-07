@@ -5,7 +5,7 @@ cli-kintone is a command line utility for kintone.
 
 ## Version
 
-0.4
+0.5
 
 ## How to Build
 
@@ -46,10 +46,12 @@ https://github.com/kintone/cli-kintone/releases
     -P="": Basic authentication password
     -U="": Basic authentication user name
     -a=0: App ID
+    -b="": Attachment file directory
     -c="": Field names (comma separated)
     -d="": Domain name
-    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'
+    -e="utf-8": Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature, 'sjis' or 'euc-jp'
     -f="": Input file path
+    -g=0: Guest Space ID
     -o="csv": Output format: 'json' or 'csv'(default)
     -p="": Password
     -q="": Query string
@@ -69,6 +71,14 @@ Export the specified columns to csv file as Shif-JIS encoding.
 If the file has $id column, the original data will be updated. If not, new row will be inserted.
 
     $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+
+Export and download attachment files to ./download directory.
+
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -b download
+
+Import and upload attachment files from ./upload directory.
+
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -b upload -f <INPUT_FILE>
 
 ## Licence
 

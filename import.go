@@ -111,7 +111,9 @@ func readCsv(app *kintone.App, filePath string) error {
 				} else {
 					column := getColumn(col, fields)
 					if column.IsSubField {
-						hasTable = true
+						if row[0] == "" || row[0] == "*" {
+							hasTable = true
+						}
 					}
 					columns = append(columns, column)
 				}

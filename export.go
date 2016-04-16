@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 	//"sort"
-	"github.com/kintone/go-kintone"
+	"github.com/ryokdy/go-kintone"
 	"golang.org/x/text/transform"
 )
 

@@ -12,7 +12,7 @@ import (
 	"path"
 	"errors"
 
-	"github.com/kintone/go-kintone"
+	"github.com/ryokdy/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -81,6 +81,7 @@ func readCsv(app *kintone.App, filePath string) error {
 		config.deleteAll = false
 	}
 
+	keyField := ""
 	hasTable := false
 	var peeked *[]string
 	for {
@@ -109,6 +110,10 @@ func readCsv(app *kintone.App, filePath string) error {
 					columns = append(columns, column)
 					col = column.Code
 				} else {
+					if len(col) > 0 && col[0] == '*' {
+						col = col[1:]
+						keyField = col
+					}
 					column := getColumn(col, fields)
 					if column.IsSubField {
 						if row[0] == "" || row[0] == "*" {
@@ -152,9 +157,12 @@ func readCsv(app *kintone.App, filePath string) error {
 								record[column.Code] = field
 							}
 						} else {
-							field := getField(column.Type, col)
-							if field != nil {
-								record[column.Code] = field
+							if column.Code == keyField && col == "" {
+							} else {
+								field := getField(column.Type, col)
+								if field != nil {
+									record[column.Code] = field
+								}
 							}
 						}
 					}
@@ -184,11 +192,12 @@ func readCsv(app *kintone.App, filePath string) error {
 				}
 			}
 
-			if id != 0 {
+			_, hasKeyField := record[keyField]
+			if id != 0 || (keyField != "" && hasKeyField) {
 				setRecordUpdatable(record, columns)
 				recordsUpdate = append(recordsUpdate, kintone.NewRecordWithId(id, record))
 				if len(recordsUpdate) >= IMPORT_ROW_LIMIT {
-					update(app, recordsUpdate[:])
+					update(app, recordsUpdate[:], keyField)
 					recordsUpdate = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
 				}
 			} else {
@@ -201,7 +210,7 @@ func readCsv(app *kintone.App, filePath string) error {
 		}
 	}
 	if len(recordsUpdate) > 0 {
-		err = update(app, recordsUpdate[:])
+		err = update(app, recordsUpdate[:], keyField)
 		if err != nil {
 			return err
 		}
@@ -276,10 +285,13 @@ func insert(app *kintone.App, recs []*kintone.Record)  error {
 	return err
 }
 
-func update(app *kintone.App, recs []*kintone.Record)  error {
+func update(app *kintone.App, recs []*kintone.Record, keyField string)  error {
 	var err error
-	err = app.UpdateRecords(recs, true)
-
+	if keyField != "" {
+		err = app.UpdateRecordsByKey(recs, true, keyField)
+	} else {
+		err = app.UpdateRecords(recs, true)
+	}
 	return err
 }
 

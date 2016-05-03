@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/ryokdy/go-kintone"
+	"github.com/cybozu/go-kintone"
 	"github.com/howeyc/gopass"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"

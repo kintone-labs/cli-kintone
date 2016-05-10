@@ -5,7 +5,7 @@ cli-kintone is a command line utility for kintone.
 
 ## Version
 
-0.5
+0.6
 
 ## How to Build
 
@@ -79,6 +79,10 @@ Export and download attachment files to ./download directory.
 Import and upload attachment files from ./upload directory.
 
     $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -b upload -f <INPUT_FILE>
+
+Upload and put a "*" in front of the key field.
+
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "*name1, name2" -t <API_TOKEN> -f <INPUT_FILE>
 
 ## Licence
 

@@ -8,7 +8,7 @@ import (
 	"time"
 	"regexp"
 	//"sort"
-	"github.com/cybozu/go-kintone"
+	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 

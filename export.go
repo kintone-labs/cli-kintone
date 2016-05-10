@@ -6,20 +6,32 @@ import (
 	"os"
 	"strings"
 	"time"
+	"regexp"
 	//"sort"
 	"github.com/cybozu/go-kintone"
 	"golang.org/x/text/transform"
 )
 
 
-func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, error) {
+func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, bool, error) {
 
-	newQuery := config.query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
-	records, err := app.GetRecords(fields, newQuery)
-	if err != nil {
-		return nil, err
+	r := regexp.MustCompile(`limit\s+\d+`)
+	if r.MatchString(config.query) {
+		records, err := app.GetRecords(fields, config.query)
+
+		if err != nil {
+			return nil, true, err
+		}
+		return records, true, nil
+	} else {
+		newQuery := config.query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
+		records, err := app.GetRecords(fields, newQuery)
+
+		if err != nil {
+			return nil, true, err
+		}
+		return records, (len(records) < EXPORT_ROW_LIMIT), nil
 	}
-	return records, nil
 }
 
 func getWriter() io.Writer {
@@ -37,7 +49,7 @@ func writeJson(app *kintone.App) error {
 
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += EXPORT_ROW_LIMIT {
-		records, err := getRecords(app, config.fields, offset)
+		records, eof, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
@@ -50,7 +62,7 @@ func writeJson(app *kintone.App) error {
 			fmt.Fprint(writer, json)
 			i += 1
 		}
-		if len(records) < EXPORT_ROW_LIMIT {
+		if eof {
 			break
 		}
 	}
@@ -150,7 +162,7 @@ func writeCsv(app *kintone.App) error {
 
 	hasTable := false
 	for ;;offset += EXPORT_ROW_LIMIT {
-		records, err := getRecords(app, config.fields, offset)
+		records, eof, err := getRecords(app, config.fields, offset)
 		if err != nil {
 			return err
 		}
@@ -237,7 +249,7 @@ func writeCsv(app *kintone.App) error {
 			}
 			i++
 		}
-		if len(records) < EXPORT_ROW_LIMIT {
+		if eof {
 			break
 		}
 	}

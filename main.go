@@ -171,13 +171,15 @@ func main() {
 
 	if config.basicAuthUser != "" && config.basicAuthPassword == "" {
 		fmt.Printf("Basic authentication password: ")
-		config.basicAuthPassword = string(gopass.GetPasswd())
+		pass, _ := gopass.GetPasswd()
+		config.basicAuthPassword = string(pass)
 	}
 
 	if config.apiToken == "" {
 		if config.password == "" {
 			fmt.Printf("Password: ")
-			config.password = string(gopass.GetPasswd())
+			pass, _ := gopass.GetPasswd()
+			config.basicAuthPassword = string(pass)
 		}
 
 		app = &kintone.App{

@@ -74,7 +74,7 @@ func readCsv(app *kintone.App, filePath string) error {
 	}
 
 	if config.deleteAll {
-		err = deleteRecords(app)
+		err = deleteRecords(app, config.query)
 		if err != nil {
 			return err
 		}
@@ -295,13 +295,14 @@ func update(app *kintone.App, recs []*kintone.Record, keyField string)  error {
 	return err
 }
 
-// delete all records
-func deleteRecords(app *kintone.App) error {
+// delete specific records
+func deleteRecords(app *kintone.App, query string) error {
 	var lastId uint64 = 0
 	for {
 		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
 
-		query := fmt.Sprintf("limit %v", IMPORT_ROW_LIMIT)
+		query := query
+		query += fmt.Sprintf(" limit %v", IMPORT_ROW_LIMIT)
 		records, err := app.GetRecords([]string{"$id"}, query)
 		if err != nil {
 			return err

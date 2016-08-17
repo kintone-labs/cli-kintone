@@ -301,8 +301,12 @@ func deleteRecords(app *kintone.App, query string) error {
 	for {
 		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
 
-		_query := query
-		_query += fmt.Sprintf(" limit %v", IMPORT_ROW_LIMIT)
+		r := regexp.MustCompile(`limit\s+\d+`)
+		if r.MatchString(query) {
+			_query := query
+		} else {
+			_query := query + fmt.Sprintf(" limit %v", IMPORT_ROW_LIMIT)
+		}
 		records, err := app.GetRecords([]string{"$id"}, _query)
 		if err != nil {
 			return err

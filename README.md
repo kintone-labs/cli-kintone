@@ -42,7 +42,7 @@ https://github.com/kintone/cli-kintone/releases
 
 ## Usage
 
-    -D=false: Delete all records before insert
+    -D=false: Delete records before insert. You can specify the deleting record condition by option "-q"
     -P="": Basic authentication password
     -U="": Basic authentication user name
     -a=0: App ID

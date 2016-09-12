@@ -1,0 +1,35 @@
+language: go
+go:
+  - 1.7
+  - tip
+env: "PATH=/home/travis/gopath/bin:$PATH"
+before_install:
+  - go get github.com/kintone/go-kintone
+  - go get github.com/howeyc/gopass
+  - go get golang.org/x/text/encoding
+install:
+  - go get github.com/mitchellh/gox
+  - gox -build-toolchain -osarch="windows/386 windows/amd64 darwin/amd64 linux/amd64"
+script:
+  - go test -v ./...
+  - go vet -x ./...
+  - GOOS=linux GOARCH=amd64 go build -o build/linux-x64/cli-kintone
+  - zip linux-x64.zip build/linux-x64/cli-kintone
+  - GOOS=darwin GOARCH=amd64 go build -o build/macos-x64/cli-kintone
+  - zip macos-x64.zip build/macos-x64/cli-kintone
+  - GOOS=windows GOARCH=amd64 go build -o build/windows-x64/cli-kintone.exe
+  - zip windows-x64.zip build/windows-x64/cli-kintone
+  - GOOS=windows GOARCH=386 go build -o build/windows/cli-kintone.exe
+  - zip windows.zip build/windows/cli-kintone
+deploy:
+  provider: releases
+  api_key: "d1acdcc5185ce5763066a257eef0506e56e70db7"
+  file:
+    - "linux-x64.zip"
+    - "macos-x64.zip"
+    - "windows-x64.zip"
+    - "windows.zip"
+  skip_cleanup: true
+  all_branches: true  # https://github.com/travis-ci/travis-ci/issues/1675
+  on:
+    tags: true

@@ -416,6 +416,24 @@ func getField(fieldType string, value string) interface{} {
 			}
 		}
 		return ret
+	case kintone.FT_ORGANIZATION:
+		organizations := strings.Split(value, "\n")
+		var ret kintone.OrganizationField = []kintone.Organization{}
+		for _, organization := range organizations {
+			if len(strings.TrimSpace(organization)) > 0 {
+				ret = append(ret, kintone.Organization{Code: organization})
+			}
+		}
+		return ret
+	case kintone.FT_GROUP:
+		groups := strings.Split(value, "\n")
+		var ret kintone.GroupField = []kintone.Group{}
+		for _, group := range groups {
+			if len(strings.TrimSpace(group)) > 0 {
+				ret = append(ret, kintone.Group{Code: group})
+			}
+		}
+		return ret
 	case kintone.FT_CATEGORY:
 		return nil
 	case kintone.FT_STATUS:

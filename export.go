@@ -349,6 +349,10 @@ func getType(f interface{}) string {
 		return kintone.FT_DATETIME
 	case kintone.UserField:
 		return kintone.FT_USER
+	case kintone.OrganizationField:
+		return kintone.FT_ORGANIZATION
+	case kintone.GroupField:
+		return kintone.FT_GROUP
 	case kintone.CategoryField:
 		return kintone.FT_CATEGORY
 	case kintone.StatusField:
@@ -451,6 +455,20 @@ func toString(f interface{}, delimiter string) string {
 			users = append(users, user.Code)
 		}
 		return strings.Join(users, delimiter)
+	case kintone.OrganizationField:
+		organizationField := f.(kintone.OrganizationField)
+		organizations := make([]string, 0, len(organizationField))
+		for _, organization := range organizationField {
+			organizations = append(organizations, organization.Code)
+		}
+		return strings.Join(organizations, delimiter)
+	case kintone.GroupField:
+		groupField := f.(kintone.GroupField)
+		groups := make([]string, 0, len(groupField))
+		for _, group := range groupField {
+			groups = append(groups, group.Code)
+		}
+		return strings.Join(groups, delimiter)
 	case kintone.AssigneeField:
 		assigneeField := f.(kintone.AssigneeField)
 		users := make([]string, 0, len(assigneeField))

@@ -19,7 +19,8 @@ script:
   - zip windows.zip build/windows/cli-kintone.exe
 deploy:
   provider: releases
-  api_key: "d1acdcc5185ce5763066a257eef0506e56e70db7"
+  api_key:
+    secure: "afx+IMehyPIxDMG+5CfE5vOo4QwIo3qHJ4RdF7ziUxpUpVFBGE+j3qT5aDLZbqMriOHdCnj6wps49wUveEQ6tldm5o266RUAtJmKIqzuhZ2E9qMyo4TQgFKYVg+qzc2weUSRCNJHx/eum5rRz7cLel78HKqY0AbMkoz6tYJLj0ERX96H/LCGLFoM5rvzWsDSIeZPhjjLsyzHM/Z5dCVc1lZtI96+2B/+iq1Ac9qkEHCQbiV3lL9XDboklLIZ3v5EkMmDw4ZBa4jziCq7SE2Topt3tGEJKh/Mt82NUuFhELkWiIII0AEg3WMAQkybPjJttqegkAGNBffDV08x155V1ab1ONvDKWS6x8vEBgsL7JF6ekcWqEie3pT2HYc1k7K8DjHfhPIAosYov5F5Esr5/ZlvQvDmfY6NxGuAp16PSjT0qaLEWGQptUfU/G4sRRUEtuIcEfwNHvKSX1XLOV2aIV62J5xXV+LFIWrXCiWmNsC2iZCwN6QLYhp3oiR0LQfTAJlclJeif7Qm+ue3L+r8tfoC44SdID3rd/Mq/XV4HAffgmnhLRwKX8H4SNa28Ww7/OCp5cV/7O8g1n5NNZIwv1+MD6VakGR1pTwFyLc5aDNAqvdPCfPFRLN16uHjPgNUwj4Ev/M6M6BH13z/q/MIL2thjBZBErNDO8wnL2wBe1Q="
   file:
     - "linux-x64.zip"
     - "macos-x64.zip"

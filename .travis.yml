@@ -1,7 +1,6 @@
 language: go
 go:
   - 1.7
-  - tip
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/kintone/go-kintone
@@ -14,10 +13,10 @@ script:
   - zip linux-x64.zip build/linux-x64/cli-kintone
   - gox -osarch="darwin/amd64" -output build/macos-x64/cli-kintone
   - zip macos-x64.zip build/macos-x64/cli-kintone
-  - gox -osarch="windows/amd64" -output build/windows-x64/cli-kintone
-  - zip windows-x64.zip build/windows-x64/cli-kintone
-  - gox -osarch="windows/386" -output build/windows/cli-kintone
-  - zip windows.zip build/windows/cli-kintone
+  - gox -osarch="windows/amd64" -output build/windows-x64/cli-kintone.exe
+  - zip windows-x64.zip build/windows-x64/cli-kintone.exe
+  - gox -osarch="windows/386" -output build/windows/cli-kintone.exe
+  - zip windows.zip build/windows/cli-kintone.exe
 deploy:
   provider: releases
   api_key: "d1acdcc5185ce5763066a257eef0506e56e70db7"

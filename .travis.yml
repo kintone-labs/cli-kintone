@@ -1,0 +1,32 @@
+language: go
+go:
+  - 1.7
+env: "PATH=/home/travis/gopath/bin:$PATH"
+before_install:
+  - go get github.com/kintone/go-kintone
+  - go get github.com/howeyc/gopass
+  - go get golang.org/x/text/encoding
+  - go get github.com/mitchellh/gox
+script:
+  - go vet -x ./...
+  - gox -osarch="linux/amd64" -output build/linux-x64/cli-kintone
+  - zip linux-x64.zip build/linux-x64/cli-kintone
+  - gox -osarch="darwin/amd64" -output build/macos-x64/cli-kintone
+  - zip macos-x64.zip build/macos-x64/cli-kintone
+  - gox -osarch="windows/amd64" -output build/windows-x64/cli-kintone
+  - zip windows-x64.zip build/windows-x64/cli-kintone.exe
+  - gox -osarch="windows/386" -output build/windows/cli-kintone
+  - zip windows.zip build/windows/cli-kintone.exe
+deploy:
+  provider: releases
+  api_key:
+    secure: "Fm06thRLQNvVibTvLR00QAS6Z2r4kqSz2nzFCWDUBZpC8dB28iA7TlRgpdjE8OD2GvRKVvWiMaMY/qkQqELc+oMK604dW6+j8kRw7bTxXyAwtwNQBmhS0TRyQNqb6/0v7+wPskS0p5Ioig1LJtP3BduhRBWg7WjzIBBbWmwK90w="
+  file:
+    - "linux-x64.zip"
+    - "macos-x64.zip"
+    - "windows-x64.zip"
+    - "windows.zip"
+  skip_cleanup: true
+  all_branches: true  # https://github.com/travis-ci/travis-ci/issues/1675
+  on:
+    tags: true

@@ -302,10 +302,11 @@ func deleteRecords(app *kintone.App, query string) error {
 		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
 
 		r := regexp.MustCompile(`limit\s+\d+`)
+		var _query string
 		if r.MatchString(query) {
-			_query := query
+			_query = query
 		} else {
-			_query := query + fmt.Sprintf(" limit %v", IMPORT_ROW_LIMIT)
+			_query = query + fmt.Sprintf(" limit %v", IMPORT_ROW_LIMIT)
 		}
 		records, err := app.GetRecords([]string{"$id"}, _query)
 		if err != nil {
@@ -363,7 +364,7 @@ func getField(fieldType string, value string) interface{} {
 		if len(value) == 0 {
 			return kintone.SingleSelectField{Valid: false}
 		} else {
-			return kintone.SingleSelectField{value, true}
+			return kintone.SingleSelectField{String: value, Valid: true}
 		}
 	case kintone.FT_MULTI_SELECT:
 		if len(value) == 0 {
@@ -381,11 +382,11 @@ func getField(fieldType string, value string) interface{} {
 		} else {
 			dt, err := time.Parse("2006-01-02", value)
 			if err == nil {
-				return kintone.DateField{dt, true}
+				return kintone.DateField{Date: dt, Valid: true}
 			}
 			dt, err = time.Parse("2006/1/2", value)
 			if err == nil {
-				return kintone.DateField{dt, true}
+				return kintone.DateField{Date: dt, Valid: true}
 			}
 		}
 	case kintone.FT_TIME:
@@ -394,7 +395,7 @@ func getField(fieldType string, value string) interface{} {
 		} else {
 			dt, err := time.Parse("15:04:05", value)
 			if err == nil {
-				return kintone.TimeField{dt, true}
+				return kintone.TimeField{Time: dt, Valid: true}
 			}
 		}
 	case kintone.FT_DATETIME:
@@ -403,7 +404,7 @@ func getField(fieldType string, value string) interface{} {
 		} else {
 			dt, err := time.Parse(time.RFC3339, value)
 			if err == nil {
-				return kintone.DateTimeField{dt, true}
+				return kintone.DateTimeField{Time: dt, Valid: true}
 			}
 		}
 	case kintone.FT_USER:

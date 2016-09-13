@@ -34,18 +34,18 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 	}
 }
 
-func getWriter() io.Writer {
+func getWriter(writer io.Writer) io.Writer {
 	encoding := getEncoding()
 	if (encoding == nil) {
-		return os.Stdout
+		return writer
 	}
-	return transform.NewWriter(os.Stdout, encoding.NewEncoder())
+	return transform.NewWriter(writer, encoding.NewEncoder())
 }
 
-func writeJson(app *kintone.App) error {
+func writeJson(app *kintone.App, _writer io.Writer) error {
 	i := 0
 	offset := int64(0)
-	writer := getWriter()
+	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += EXPORT_ROW_LIMIT {
@@ -148,10 +148,10 @@ func hasSubTable(columns []*Column) bool {
 	return false
 }
 
-func writeCsv(app *kintone.App) error {
+func writeCsv(app *kintone.App, _writer io.Writer) error {
 	i := uint64(0)
 	offset := int64(0)
-	writer := getWriter()
+	writer := getWriter(_writer)
 	var columns Columns
 
 	// retrieve field list

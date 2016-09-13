@@ -16,12 +16,12 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func getReader(file *os.File) io.Reader {
+func getReader(reader io.Reader) io.Reader {
 	encoding := getEncoding()
 	if (encoding == nil) {
-		return file
+		return reader
 	}
-	return transform.NewReader(file, encoding.NewDecoder())
+	return transform.NewReader(reader, encoding.NewDecoder())
 }
 
 func addSubField(app *kintone.App, column *Column, col string, tables map[string]map[string]interface{}) error {
@@ -52,14 +52,9 @@ func addSubField(app *kintone.App, column *Column, col string, tables map[string
 	return nil
 }
 
-func readCsv(app *kintone.App, filePath string) error {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
+func readCsv(app *kintone.App, _reader io.Reader) error {
 
-	reader := csv.NewReader(getReader(file))
+	reader := csv.NewReader(getReader(_reader))
 
 	head := true
 	recordsInsert := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
@@ -98,7 +93,7 @@ func readCsv(app *kintone.App, filePath string) error {
 			row = *peeked
 			peeked = nil
 		}
-		//fmt.Printf("%#v", row)
+		//fmt.Printf("%#v\n", row)
 		if head && columns == nil {
 			columns = make([]*Column, 0)
 			for _, col := range row {
@@ -280,6 +275,7 @@ func uploadFile(app *kintone.App, filePath string) (string, error) {
 
 func insert(app *kintone.App, recs []*kintone.Record)  error {
 	var err error
+
 	_, err = app.AddRecords(recs)
 
 	return err

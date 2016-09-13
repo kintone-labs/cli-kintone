@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strings"
-
+	"os"
 	"github.com/kintone/go-kintone"
 	"github.com/howeyc/gopass"
 	"golang.org/x/text/encoding"
@@ -205,12 +205,17 @@ func main() {
 	var err error
 	if config.filePath == "" {
 		if config.format == "json" {
-			err = writeJson(app)
+			err = writeJson(app, os.Stdout)
 		} else {
-			err = writeCsv(app)
+			err = writeCsv(app, os.Stdout)
 		}
 	} else {
-		err = readCsv(app, config.filePath)
+		var file *os.File
+		file, err = os.Open(config.filePath)
+		if err == nil {
+			defer file.Close()
+			err = readCsv(app, file)
+		}
 	}
 	if err != nil {
 		log.Fatal(err)

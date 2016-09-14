@@ -34,18 +34,18 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 	}
 }
 
-func getWriter() io.Writer {
+func getWriter(writer io.Writer) io.Writer {
 	encoding := getEncoding()
 	if (encoding == nil) {
-		return os.Stdout
+		return writer
 	}
-	return transform.NewWriter(os.Stdout, encoding.NewEncoder())
+	return transform.NewWriter(writer, encoding.NewEncoder())
 }
 
-func writeJson(app *kintone.App) error {
+func writeJson(app *kintone.App, _writer io.Writer) error {
 	i := 0
 	offset := int64(0)
-	writer := getWriter()
+	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for ;;offset += EXPORT_ROW_LIMIT {
@@ -148,10 +148,10 @@ func hasSubTable(columns []*Column) bool {
 	return false
 }
 
-func writeCsv(app *kintone.App) error {
+func writeCsv(app *kintone.App, _writer io.Writer) error {
 	i := uint64(0)
 	offset := int64(0)
-	writer := getWriter()
+	writer := getWriter(_writer)
 	var columns Columns
 
 	// retrieve field list
@@ -349,6 +349,10 @@ func getType(f interface{}) string {
 		return kintone.FT_DATETIME
 	case kintone.UserField:
 		return kintone.FT_USER
+	case kintone.OrganizationField:
+		return kintone.FT_ORGANIZATION
+	case kintone.GroupField:
+		return kintone.FT_GROUP
 	case kintone.CategoryField:
 		return kintone.FT_CATEGORY
 	case kintone.StatusField:
@@ -451,6 +455,20 @@ func toString(f interface{}, delimiter string) string {
 			users = append(users, user.Code)
 		}
 		return strings.Join(users, delimiter)
+	case kintone.OrganizationField:
+		organizationField := f.(kintone.OrganizationField)
+		organizations := make([]string, 0, len(organizationField))
+		for _, organization := range organizationField {
+			organizations = append(organizations, organization.Code)
+		}
+		return strings.Join(organizations, delimiter)
+	case kintone.GroupField:
+		groupField := f.(kintone.GroupField)
+		groups := make([]string, 0, len(groupField))
+		for _, group := range groupField {
+			groups = append(groups, group.Code)
+		}
+		return strings.Join(groups, delimiter)
 	case kintone.AssigneeField:
 		assigneeField := f.(kintone.AssigneeField)
 		users := make([]string, 0, len(assigneeField))

@@ -179,7 +179,7 @@ func main() {
 		if config.password == "" {
 			fmt.Printf("Password: ")
 			pass, _ := gopass.GetPasswd()
-			config.basicAuthPassword = string(pass)
+			config.password = string(pass)
 		}
 
 		app = &kintone.App{

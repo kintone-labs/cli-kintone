@@ -80,9 +80,13 @@ Import and upload attachment files from ./upload directory.
 
     $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -b upload -f <INPUT_FILE>
 
-Upload and put a "*" in front of the key field.
+Import and update by selecting a key to bulk update.  
+The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field name,  
+e.g. “update_date",“*id",“status"
 
-    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -c "*name1, name2" -t <API_TOKEN> -f <INPUT_FILE>
+    $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+
+
 
 ## Licence
 

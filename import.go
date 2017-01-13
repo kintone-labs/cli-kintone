@@ -16,6 +16,11 @@ import (
 	"golang.org/x/text/transform"
 )
 
+type SubRecord struct {
+	Id       uint64
+	Fields   map[string]interface{}
+}
+
 func getReader(reader io.Reader) io.Reader {
 	encoding := getEncoding()
 	if (encoding == nil) {
@@ -24,15 +29,20 @@ func getReader(reader io.Reader) io.Reader {
 	return transform.NewReader(reader, encoding.NewDecoder())
 }
 
-func addSubField(app *kintone.App, column *Column, col string, tables map[string]map[string]interface{}) error {
-	if len(col) == 0 {
-		return nil
+func getSubRecord(tableName string, tables map[string]*SubRecord) *SubRecord {
+	table := tables[tableName]
+	if table == nil {
+		fields := make(map[string]interface{})
+		table = &SubRecord{0, fields}
+		tables[tableName] = table
 	}
 
-	table := tables[column.Table]
-	if table == nil {
-		table = make(map[string]interface{})
-		tables[column.Table] = table
+	return table
+}
+
+func addSubField(app *kintone.App, column *Column, col string, table *SubRecord) error {
+	if len(col) == 0 {
+		return nil
 	}
 
 	if column.Type == kintone.FT_FILE {
@@ -41,12 +51,12 @@ func addSubField(app *kintone.App, column *Column, col string, tables map[string
 			return err
 		}
 		if field != nil {
-			table[column.Code] = field
+			table.Fields[column.Code] = field
 		}
 	} else {
 		field := getField(column.Type, col)
 		if field != nil {
-			table[column.Code] = field
+			table.Fields[column.Code] = field
 		}
 	}
 	return nil
@@ -125,13 +135,20 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 			record := make(map[string]interface{})
 
 			for {
-				tables := make(map[string]map[string]interface{})
+				tables := make(map[string]*SubRecord)
 				for i, col := range row {
 					column := columns[i]
 					if column.IsSubField {
-						err := addSubField(app, column, col, tables)
+						table := getSubRecord(column.Table, tables)
+						err := addSubField(app, column, col, table)
 						if err != nil {
 							return err
+						}
+					} else if column.Type == kintone.FT_SUBTABLE {
+						if col != "" {
+							subId, _ := strconv.ParseUint(col, 10, 64)
+							table := getSubRecord(column.Code, tables)
+							table.Id = subId
 						}
 					} else {
 						if hasTable && row[0] != "*" {
@@ -139,7 +156,7 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 						}
 						if column.Code == "$id" {
 							if col != "" {
-								id, err = strconv.ParseUint(col, 10, 64)
+								id, _ = strconv.ParseUint(col, 10, 64)
 							}
 						} else if column.Code == "$revision" {
 
@@ -168,7 +185,7 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 					}
 
 					stf := record[key].(kintone.SubTableField)
-					stf = append(stf, kintone.NewRecord(table))
+					stf = append(stf, kintone.NewRecordWithId(table.Id, table.Fields))
 					record[key] = stf
 				}
 

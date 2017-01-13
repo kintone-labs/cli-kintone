@@ -164,6 +164,9 @@ func main() {
 
 	if colNames != "" {
 		config.fields = strings.Split(colNames, ",")
+		for i, field := range config.fields {
+			config.fields[i] = strings.TrimSpace(field)
+		}
 	}
 
 

@@ -7,7 +7,7 @@ import (
   "fmt"
 	"testing"
 	"encoding/csv"
-  "github.com/ryokdy/go-kintone"
+  "github.com/kintone/go-kintone"
 )
 
 func makeTestData(app *kintone.App) error {
@@ -148,10 +148,13 @@ func TestExport2(t *testing.T) {
 	if row[3] != "number" {
 		t.Error("Invalid field code")
 	}
-	if row[4] != "table_single_line_text" {
+	if row[4] != "table" {
 		t.Error("Invalid field code")
 	}
-	if row[5] != "table_multi_line_text" {
+	if row[5] != "table_single_line_text" {
+		t.Error("Invalid field code")
+	}
+	if row[6] != "table_multi_line_text" {
 		t.Error("Invalid field code")
 	}
 
@@ -171,10 +174,10 @@ func TestExport2(t *testing.T) {
 	if row[3] != "12345" {
 		t.Error("Invalid 4th field value of row 1")
 	}
-	if row[4] != "table single line1" {
+	if row[5] != "table single line1" {
 		t.Error("Invalid 5th field value of row 1")
 	}
-	if row[5] != "table multi line1\nmulti line" {
+	if row[6] != "table multi line1\nmulti line" {
 		t.Error("Invalid 6th field value of row 1")
 	}
 
@@ -194,10 +197,10 @@ func TestExport2(t *testing.T) {
 	if row[3] != "12345" {
 		t.Error("Invalid 4th field value of row 2")
 	}
-	if row[4] != "table single line2" {
+	if row[5] != "table single line2" {
 		t.Error("Invalid 5th field value of row 2")
 	}
-	if row[5] != "table multi line2\nmulti line" {
+	if row[6] != "table multi line2\nmulti line" {
 		t.Error("Invalid 6th field value of row 2")
 	}
 
@@ -217,10 +220,10 @@ func TestExport2(t *testing.T) {
 	if row[3] != "12345" {
 		t.Error("Invalid 4th field value of row 3")
 	}
-	if row[4] != "" {
+	if row[5] != "" {
 		t.Error("Invalid 5th field value of row 3")
 	}
-	if row[5] != "" {
+	if row[6] != "" {
 		t.Error("Invalid 6th field value of row 3")
 	}
 

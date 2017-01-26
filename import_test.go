@@ -6,7 +6,7 @@ import (
 	//"io"
   //"fmt"
 	"testing"
-  "github.com/ryokdy/go-kintone"
+  "github.com/kintone/go-kintone"
 )
 
 func TestImport1(t *testing.T) {

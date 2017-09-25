@@ -156,6 +156,8 @@ func main() {
 	flag.StringVar(&config.fileDir, "b", "", "Attachment file directory")
 
 	flag.Uint64Var(&config.line, "l", 1, "The position index of data in the input file")
+	flag.BoolVar(&config.isImport, "import", false, "Force import")
+	flag.BoolVar(&config.isExport, "export", false, "Force export")
 	flag.Parse()
 
 	if config.appId == 0 || (config.apiToken == "" && (config.domain == "" || config.login == "")) {
@@ -211,10 +213,14 @@ func main() {
 
 	var err error
 	if config.filePath == "" {
-		if config.format == "json" {
-			err = writeJson(app, os.Stdout)
+		if config.isImport {
+			err = importFromCSV(app, os.Stdin)
 		} else {
-			err = writeCsv(app, os.Stdout)
+			if config.format == "json" {
+				err = writeJson(app, os.Stdout)
+			} else {
+				err = writeCsv(app, os.Stdout)
+			}
 		}
 	} else {
 		var file *os.File

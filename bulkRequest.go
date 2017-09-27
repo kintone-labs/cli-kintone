@@ -111,7 +111,7 @@ func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone
 	bulkReqLength := len(bulk.Requests)
 
 	if bulkReqLength > ConstBulkRequestLimitRequest {
-		return errors.New("The length of bulk request too lagre, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
+		return errors.New("The length of bulk request was too large, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
 	}
 	var dataPUT *DataRequestRecordsPUT
 	if bulkReqLength > 0 {
@@ -145,7 +145,7 @@ func (bulk *BulkRequests) ImportDataInsert(app *kintone.App, recordData *kintone
 	bulkReqLength := len(bulk.Requests)
 
 	if bulkReqLength > ConstBulkRequestLimitRequest {
-		return errors.New("The length of bulk request too lagre, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
+		return errors.New("The length of bulk request was too large, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
 	}
 	var dataPOST *DataRequestRecordsPOST
 	if bulkReqLength > 0 {
@@ -337,9 +337,9 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 		} else {
 
 			errorsResp := err.(*BulkRequestsErrors)
-			CLIMessage = fmt.Sprintf("ERROR.\nFor errors detail, please read above content.\n")
-			CLIMessage += fmt.Sprintf("Please check the data input from line %d to %d and re-execute with flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
-			fmt.Printf(" => ERROR OCURED\n")
+			CLIMessage = fmt.Sprintf("ERROR.\nFor error details, please read the details above..\n")
+			CLIMessage += fmt.Sprintf("Line %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
+			fmt.Printf(" => ERROR OCCURRED\n")
 			fmt.Println("Status: ", errorsResp.HTTPStatus)
 			for idx, errorItem := range errorsResp.Results {
 				if errorItem.Code == "" {
@@ -356,7 +356,7 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 			}
 		}
 		fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
-		fmt.Printf("PROGRESS STOPPED!\n\n")
+		fmt.Printf("PROCESS STOPPED!\n\n")
 		if CLIMessage != "" {
 			fmt.Println(methodOccuredError, CLIMessage)
 		}

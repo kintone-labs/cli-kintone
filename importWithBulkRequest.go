@@ -174,7 +174,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			_, hasKeyField := record[keyField]
 			if id != 0 || (keyField != "" && hasKeyField) {
 				setRecordUpdatable(record, columns)
-				err = bulkRequests.ImportDataUpdate(app, kintone.NewRecordWithId(id, record))
+				err = bulkRequests.ImportDataUpdate(app, kintone.NewRecordWithId(id, record), keyField)
 				if err != nil {
 					log.Fatalln(err)
 				}
@@ -186,7 +186,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			}
 			if rowNumber%(ConstBulkRequestLimitRecordOption) == 0 {
 				fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
-				fmt.Printf("Start from: %d - %d", lastRowImport, rowNumber)
+				fmt.Printf("Start from lines: %d - %d", lastRowImport, rowNumber)
 
 				resp, err := bulkRequests.Request(app)
 				bulkRequests.HandelResponse(resp, err, lastRowImport, rowNumber)
@@ -199,7 +199,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 	}
 	if len(bulkRequests.Requests) > 0 {
 		fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
-		fmt.Printf("Start from: %d - %d", lastRowImport, rowNumber)
+		fmt.Printf("Start from lines: %d - %d", lastRowImport, rowNumber)
 		resp, err := bulkRequests.Request(app)
 		bulkRequests.HandelResponse(resp, err, lastRowImport, rowNumber)
 	}

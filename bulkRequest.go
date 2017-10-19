@@ -61,14 +61,31 @@ type DataRequestRecordPUT struct {
 	ID     uint64          `json:"id,string"`
 	Record *kintone.Record `json:"record,string"`
 }
+
+type DataRequestRecordPUTByKey struct {
+	UpdateKey *kintone.UpdateKey `json:"updateKey,string"`
+	Record    *kintone.Record    `json:"record,string"`
+}
+
+// DataRequestRecordsPUT - Data which will be update in the kintone app
+// DataRequestRecordsPUT.Records - array include DataRequestRecordPUTByKey and DataRequestRecordPUT
 type DataRequestRecordsPUT struct {
-	App     uint64                  `json:"app,string"`
-	Records []*DataRequestRecordPUT `json:"records"`
+	App     uint64        `json:"app,string"`
+	Records []interface{} `json:"records"`
 }
 
 // SetRecord set data record for PUT method
 func (recordsPut *DataRequestRecordsPUT) SetRecord(record *kintone.Record) {
 	recordPut := &DataRequestRecordPUT{ID: record.Id(), Record: record}
+	recordsPut.Records = append(recordsPut.Records, recordPut)
+
+}
+
+// SetRecord set data record for PUT method
+func (recordsPut *DataRequestRecordsPUT) SetRecordWithKey(record *kintone.Record, keyCode string) {
+	updateKey := &kintone.UpdateKey{FieldCode: keyCode, Field: record.Fields[keyCode].(kintone.UpdateKeyField)}
+	delete(record.Fields, keyCode)
+	recordPut := &DataRequestRecordPUTByKey{UpdateKey: updateKey, Record: record}
 	recordsPut.Records = append(recordsPut.Records, recordPut)
 
 }
@@ -107,7 +124,7 @@ func (bulk *BulkRequests) Decode(b []byte) (*DataResponseBulkPOST, error) {
 }
 
 // ImportDataUpdate import data with update
-func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone.Record) error {
+func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone.Record, keyField string) error {
 	bulkReqLength := len(bulk.Requests)
 
 	if bulkReqLength > ConstBulkRequestLimitRequest {
@@ -119,18 +136,30 @@ func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone
 			if bulkReqItem.Method != "PUT" {
 				continue
 			}
+			// TODO: Check limit 100 record - kintone limit
 			dataPUT = bulkReqItem.Payload.(*DataRequestRecordsPUT)
 			if len(dataPUT.Records) == ConstRecordsLimitPerRequest {
 				continue
 			}
-			dataPUT.SetRecord(recordData)
+			if keyField != "" {
+				dataPUT.SetRecordWithKey(recordData, keyField)
+			} else {
+				dataPUT.SetRecord(recordData)
+			}
 			bulk.Requests[i].Payload = dataPUT
 			return nil
 		}
 	}
 
-	recordsUpdate := make([]*DataRequestRecordPUT, 0)
-	recordPUT := &DataRequestRecordPUT{ID: recordData.Id(), Record: recordData}
+	recordsUpdate := make([]interface{}, 0)
+	var recordPUT interface{}
+	if keyField != "" {
+		updateKey := &kintone.UpdateKey{FieldCode: keyField, Field: recordData.Fields[keyField].(kintone.UpdateKeyField)}
+		delete(recordData.Fields, keyField)
+		recordPUT = &DataRequestRecordPUTByKey{UpdateKey: updateKey, Record: recordData}
+	} else {
+		recordPUT = &DataRequestRecordPUT{ID: recordData.Id(), Record: recordData}
+	}
 	recordsUpdate = append(recordsUpdate, recordPUT)
 	dataPUT = &DataRequestRecordsPUT{App: app.AppId, Records: recordsUpdate}
 	requestPUTRecords := &BulkRequestItem{"PUT", "/k/v1/records.json", dataPUT}
@@ -157,6 +186,7 @@ func (bulk *BulkRequests) ImportDataInsert(app *kintone.App, recordData *kintone
 			if len(dataPOST.Records) == ConstRecordsLimitPerRequest {
 				continue
 			}
+			// TODO: Check limit 100 record - kintone limit
 			dataPOST.Records = append(dataPOST.Records, recordData)
 			bulk.Requests[i].Payload = dataPOST
 			return nil
@@ -337,8 +367,8 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 		} else {
 
 			errorsResp := err.(*BulkRequestsErrors)
-			CLIMessage = fmt.Sprintf("ERROR.\nFor error details, please read the details above..\n")
-			CLIMessage += fmt.Sprintf("Line %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
+			CLIMessage = fmt.Sprintf("ERROR.\nFor error details, please read the details above.\n")
+			CLIMessage += fmt.Sprintf("Lines %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
 			fmt.Printf(" => ERROR OCCURRED\n")
 			fmt.Println("Status: ", errorsResp.HTTPStatus)
 			for idx, errorItem := range errorsResp.Results {

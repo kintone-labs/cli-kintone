@@ -97,6 +97,8 @@ Import from standard input (stdin).
 
      $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> # Input is a standard input (stdin)
 
+## Restriction
+* The limit of upload file size is 10 MB.
 
 ## Licence
 

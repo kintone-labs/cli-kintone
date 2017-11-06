@@ -58,6 +58,9 @@ https://github.com/kintone/cli-kintone/releases
     -t="": API token
     -u="": Login name
 
+    -l=1: The position index of data in the input file. Default is 1.
+    --import: Force import from CSV file/stdin
+    --export: Force export the kintone data to stdout.
 ## Examples
 
 Export all columns from an app.
@@ -86,6 +89,13 @@ e.g. “update_date",“*id",“status"
 
     $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
+Import from CSV with specific line.
+
+     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -l 25 #import data from line 25 of the input files
+
+Import from standard input (stdin).
+
+     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> # Input is a standard input (stdin)
 
 
 ## Licence

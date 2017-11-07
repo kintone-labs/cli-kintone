@@ -59,7 +59,7 @@ https://github.com/kintone/cli-kintone/releases
     -u="": Login name
 
     -l=1: The position index of data in the input file. Default is 1.
-    --import: Force import from CSV file/stdin
+    --import: Force import data from stdin (data format: CSV)
     --export: Force export the kintone data to stdout.
 ## Examples
 
@@ -89,16 +89,16 @@ e.g. “update_date",“*id",“status"
 
     $ cli-kintone -a <APP_ID> -d <DOMAIN_NAME> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
-Import from CSV with specific line.
+Import CSV from line 25 of the input file.
 
-     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -l 25 #import data from line 25 of the input files
+     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> -l 25
 
 Import from standard input (stdin).
 
-     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN> # Input is a standard input (stdin)
+     $ cli-kintone --import -a <APP_ID> -d <DOMAIN_NAME> -t <API_TOKEN>
 
 ## Restriction
-* The limit of upload file size is 10 MB.
+* The limit of file upload size is 10 MB.
 
 ## Licence
 

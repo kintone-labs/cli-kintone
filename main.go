@@ -4,32 +4,36 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"strings"
 	"os"
-	"github.com/kintone/go-kintone"
+	"strings"
+
 	"github.com/howeyc/gopass"
+	"github.com/kintone/go-kintone"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
 )
 
 type Configure struct {
-	login string
-	password string
-	basicAuthUser string
+	login             string
+	password          string
+	basicAuthUser     string
 	basicAuthPassword string
-	apiToken string
-	domain string
-	basic string
-	format string
-	query string
-	appId uint64
-	fields []string
-	filePath string
-	deleteAll bool
-	encoding string
-	guestSpaceId uint64
-	fileDir string
+	apiToken          string
+	domain            string
+	basic             string
+	format            string
+	query             string
+	appId             uint64
+	fields            []string
+	filePath          string
+	deleteAll         bool
+	encoding          string
+	guestSpaceId      uint64
+	fileDir           string
+	line              uint64
+	isImport          bool
+	isExport          bool
 }
 
 var config Configure
@@ -38,20 +42,20 @@ const IMPORT_ROW_LIMIT = 100
 const EXPORT_ROW_LIMIT = 500
 
 type Column struct {
-	Code        string
-	Type        string
-	IsSubField  bool
-	Table       string
+	Code       string
+	Type       string
+	IsSubField bool
+	Table      string
 }
 
 type Columns []*Column
 
 func (p Columns) Len() int {
-  return len(p)
+	return len(p)
 }
 
 func (p Columns) Swap(i, j int) {
-  p[i], p[j] = p[j], p[i]
+	p[i], p[j] = p[j], p[i]
 }
 
 func (p Columns) Less(i, j int) bool {
@@ -151,8 +155,11 @@ func main() {
 	flag.StringVar(&config.encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'")
 	flag.StringVar(&config.fileDir, "b", "", "Attachment file directory")
 
-	flag.Parse()
+	flag.Uint64Var(&config.line, "l", 1, "The position index of data in the input file")
+	flag.BoolVar(&config.isImport, "import", false, "Force import")
+	flag.BoolVar(&config.isExport, "export", false, "Force export")
 
+	flag.Parse()
 	if config.appId == 0 || (config.apiToken == "" && (config.domain == "" || config.login == "")) {
 		flag.PrintDefaults()
 		return
@@ -168,7 +175,6 @@ func main() {
 			config.fields[i] = strings.TrimSpace(field)
 		}
 	}
-
 
 	var app *kintone.App
 
@@ -207,17 +213,21 @@ func main() {
 
 	var err error
 	if config.filePath == "" {
-		if config.format == "json" {
-			err = writeJson(app, os.Stdout)
+		if config.isImport {
+			err = importFromCSV(app, os.Stdin)
 		} else {
-			err = writeCsv(app, os.Stdout)
+			if config.format == "json" {
+				err = writeJson(app, os.Stdout)
+			} else {
+				err = writeCsv(app, os.Stdout)
+			}
 		}
 	} else {
 		var file *os.File
 		file, err = os.Open(config.filePath)
 		if err == nil {
 			defer file.Close()
-			err = readCsv(app, file)
+			err = importFromCSV(app, file)
 		}
 	}
 	if err != nil {

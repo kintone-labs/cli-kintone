@@ -230,7 +230,7 @@ func main() {
 	}
 	// Filter flag: the first flag have priority
 	if config.isImport && config.isExport {
-		log.Fatal("The -f option is not supported with the --export option.")
+		log.Fatal("The options --import and --export cannot be specified together!")
 	}
 
 	if config.isImport {
@@ -243,7 +243,7 @@ func main() {
 
 	if config.isExport {
 		if config.filePath != "" {
-			log.Fatal("The options --import and --export cannot be specified together!")
+			log.Fatal("The -f option is not supported with the --export option.")
 		}
 		if config.format == "json" {
 			err = writeJson(app, os.Stdout)

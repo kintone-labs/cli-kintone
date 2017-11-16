@@ -19,6 +19,17 @@ import (
 	"github.com/kintone/go-kintone"
 )
 
+const (
+	// ConstBulkRequestLimitRecordOption set option: record per bulkRequest
+	ConstBulkRequestLimitRecordOption = 100
+
+	// ConstBulkRequestLimitRequest kintone limited: The request count per bulkRequest
+	ConstBulkRequestLimitRequest = 20
+
+	// ConstRecordsLimitPerRequest kintone limited: The records count per request
+	ConstRecordsLimitPerRequest = 100
+)
+
 // BulkRequestItem item in the bulkRequest array
 type BulkRequestItem struct {
 	Method  string      `json:"method"`
@@ -48,20 +59,24 @@ type BulkRequestsErrors struct {
 	Results        []*BulkRequestsError `json:"results"`
 }
 
+// DataResponseBulkPOST structure
 type DataResponseBulkPOST struct {
 	Results []interface{} `json:"results,string"`
 }
 
+// DataRequestRecordsPOST structure
 type DataRequestRecordsPOST struct {
 	App     uint64            `json:"app,string"`
 	Records []*kintone.Record `json:"records"`
 }
 
+//DataRequestRecordPUT structure
 type DataRequestRecordPUT struct {
 	ID     uint64          `json:"id,string"`
 	Record *kintone.Record `json:"record,string"`
 }
 
+// DataRequestRecordPUTByKey structure
 type DataRequestRecordPUTByKey struct {
 	UpdateKey *kintone.UpdateKey `json:"updateKey,string"`
 	Record    *kintone.Record    `json:"record,string"`
@@ -81,7 +96,7 @@ func (recordsPut *DataRequestRecordsPUT) SetRecord(record *kintone.Record) {
 
 }
 
-// SetRecord set data record for PUT method
+// SetRecordWithKey set data record for PUT method
 func (recordsPut *DataRequestRecordsPUT) SetRecordWithKey(record *kintone.Record, keyCode string) {
 	updateKey := &kintone.UpdateKey{FieldCode: keyCode, Field: record.Fields[keyCode].(kintone.UpdateKeyField)}
 	delete(record.Fields, keyCode)
@@ -114,6 +129,7 @@ func (bulk *BulkRequests) Request(app *kintone.App) (*DataResponseBulkPOST, inte
 	return resp1, nil
 }
 
+// Decode for BulkRequests
 func (bulk *BulkRequests) Decode(b []byte) (*DataResponseBulkPOST, error) {
 	var rsp *DataResponseBulkPOST
 	err := json.Unmarshal(b, &rsp)

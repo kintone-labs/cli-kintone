@@ -222,6 +222,8 @@ func main() {
 				err = writeCsv(app, os.Stdout)
 			}
 		}
+	} else if config.filePath == "-" {
+		err = readCsv(app, os.Stdin)
 	} else {
 		var file *os.File
 		file, err = os.Open(config.filePath)

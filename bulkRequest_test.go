@@ -19,19 +19,19 @@ func newAppTest(id uint64) *kintone.App {
 func TestRequest(t *testing.T) {
 
 	bulkReq := &BulkRequests{}
-	app := newAppTest(13)
+	app := newAppTest(16)
 	bulkReq.Requests = make([]*BulkRequestItem, 0)
 
 	/// INSERT
 	records := make([]*kintone.Record, 0)
 	record1 := kintone.NewRecord(map[string]interface{}{
-		"_1": kintone.SingleLineTextField("test 11!"),
-		"_2": kintone.SingleLineTextField("test 21!"),
+		"Text": kintone.SingleLineTextField("test 11!"),
+		"_2":   kintone.SingleLineTextField("test 21!"),
 	})
 	records = append(records, record1)
 	record2 := kintone.NewRecord(map[string]interface{}{
-		"_1": kintone.SingleLineTextField("test 22!"),
-		"_2": kintone.SingleLineTextField("test 22!"),
+		"Text": kintone.SingleLineTextField("test 22!"),
+		"_2":   kintone.SingleLineTextField("test 22!"),
 	})
 	records = append(records, record2)
 	dataPOST := &DataRequestRecordsPOST{app.AppId, records}
@@ -40,18 +40,18 @@ func TestRequest(t *testing.T) {
 	bulkReq.Requests = append(bulkReq.Requests, postRecords)
 
 	/// UPDATE
-	recordsUpdate := make([]*DataRequestRecordPUT, 0)
+	recordsUpdate := make([]interface{}, 0)
 	recordsUpdate1 := kintone.NewRecordWithId(4902, map[string]interface{}{
-		"_1": kintone.SingleLineTextField("test NNN!"),
-		"_2": kintone.SingleLineTextField("test MMM!"),
+		"Text": kintone.SingleLineTextField("test NNN!"),
+		"_2":   kintone.SingleLineTextField("test MMM!"),
 	})
 	fmt.Println(recordsUpdate1)
 	recordsUpdate = append(recordsUpdate, &DataRequestRecordPUT{ID: recordsUpdate1.Id(),
 		Record: recordsUpdate1})
 
 	recordsUpdate2 := kintone.NewRecordWithId(4903, map[string]interface{}{
-		"_1": kintone.SingleLineTextField("test 123!"),
-		"_2": kintone.SingleLineTextField("test 234!"),
+		"Text": kintone.SingleLineTextField("test 123!"),
+		"_2":   kintone.SingleLineTextField("test 234!"),
 	})
 	recordsUpdate = append(recordsUpdate, &DataRequestRecordPUT{
 		ID: recordsUpdate2.Id(), Record: recordsUpdate2})

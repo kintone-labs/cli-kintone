@@ -12,26 +12,13 @@ import (
 	"github.com/kintone/go-kintone"
 )
 
-const (
-	// ConstBulkRequestLimitRecordOption set option: record per bulkRequest
-	ConstBulkRequestLimitRecordOption = 100
-
-	// ConstBulkRequestLimitRequest kintone limited: The request count per bulkRequest
-	ConstBulkRequestLimitRequest = 20
-
-	// ConstRecordsLimitPerRequest kintone limited: The records count per request
-	ConstRecordsLimitPerRequest = 100
-)
-
 func importFromCSV(app *kintone.App, _reader io.Reader) error {
 
 	reader := csv.NewReader(getReader(_reader))
 
 	head := true
-	// recordsInsert := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-	// recordsUpdate := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-
 	var columns Columns
+
 	var lastRowImport uint64
 	lastRowImport = config.line
 	bulkRequests := &BulkRequests{}

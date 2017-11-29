@@ -14,6 +14,7 @@ import (
 	"golang.org/x/text/encoding/unicode"
 )
 
+// Configure cli configuration
 type Configure struct {
 	login             string
 	password          string
@@ -38,7 +39,10 @@ type Configure struct {
 
 var config Configure
 
+// IMPORT_ROW_LIMIT Limit of kintone app (POST/PUT)
 const IMPORT_ROW_LIMIT = 100
+
+// IMPORT_ROW_LIMIT Limit of kintone app (GET)
 const EXPORT_ROW_LIMIT = 500
 
 type Column struct {
@@ -212,25 +216,54 @@ func main() {
 	}
 
 	var err error
-	if config.filePath == "" {
-		if config.isImport {
-			err = importFromCSV(app, os.Stdin)
-		} else {
+	// Old logic without force import/export
+	if config.isImport == false && config.isExport == false {
+		if config.filePath == "" {
 			if config.format == "json" {
 				err = writeJson(app, os.Stdout)
 			} else {
 				err = writeCsv(app, os.Stdout)
 			}
-		}
-	} else {
-		var file *os.File
-		file, err = os.Open(config.filePath)
-		if err == nil {
-			defer file.Close()
-			err = importFromCSV(app, file)
+		} else {
+			importDataFromFile(app)
 		}
 	}
+	// Filter flag: the first flag have priority
+	if config.isImport && config.isExport {
+		log.Fatal("The options --import and --export cannot be specified together!")
+	}
+
+	if config.isImport {
+		if config.filePath == "" {
+			err = importFromCSV(app, os.Stdin)
+		} else {
+			importDataFromFile(app)
+		}
+	}
+
+	if config.isExport {
+		if config.filePath != "" {
+			log.Fatal("The -f option is not supported with the --export option.")
+		}
+		if config.format == "json" {
+			err = writeJson(app, os.Stdout)
+		} else {
+			err = writeCsv(app, os.Stdout)
+		}
+	}
+
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func importDataFromFile(app *kintone.App) error {
+	var file *os.File
+	var err error
+	file, err = os.Open(config.filePath)
+	if err == nil {
+		defer file.Close()
+		err = importFromCSV(app, file)
+	}
+	return err
 }

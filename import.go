@@ -5,25 +5,24 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"regexp"
-	"strings"
-	"strconv"
-	"time"
 	"path"
-	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
 type SubRecord struct {
-	Id       uint64
-	Fields   map[string]interface{}
+	Id     uint64
+	Fields map[string]interface{}
 }
 
 func getReader(reader io.Reader) io.Reader {
 	encoding := getEncoding()
-	if (encoding == nil) {
+	if encoding == nil {
 		return reader
 	}
 	return transform.NewReader(reader, encoding.NewDecoder())
@@ -63,7 +62,6 @@ func addSubField(app *kintone.App, column *Column, col string, table *SubRecord)
 }
 
 func readCsv(app *kintone.App, _reader io.Reader) error {
-
 	reader := csv.NewReader(getReader(_reader))
 
 	head := true
@@ -278,19 +276,19 @@ func uploadFile(app *kintone.App, filePath string) (string, error) {
 
 	fileinfo, err := fi.Stat()
 
-  if err != nil {
-    return "", err
-  }
+	if err != nil {
+		return "", err
+	}
 
-  if fileinfo.Size() > 10 * 1024 * 1024 {
-		return "", errors.New(fmt.Sprintf("%s file must be less than 10 MB.", filePath))
+	if fileinfo.Size() > 10*1024*1024 {
+		return "", fmt.Errorf("%s file must be less than 10 MB", filePath)
 	}
 
 	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
 	return fileKey, err
 }
 
-func insert(app *kintone.App, recs []*kintone.Record)  error {
+func insert(app *kintone.App, recs []*kintone.Record) error {
 	var err error
 
 	_, err = app.AddRecords(recs)
@@ -298,7 +296,7 @@ func insert(app *kintone.App, recs []*kintone.Record)  error {
 	return err
 }
 
-func update(app *kintone.App, recs []*kintone.Record, keyField string)  error {
+func update(app *kintone.App, recs []*kintone.Record, keyField string) error {
 	var err error
 	if keyField != "" {
 		err = app.UpdateRecordsByKey(recs, true, keyField)

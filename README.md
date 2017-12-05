@@ -24,7 +24,6 @@ Install dependencies
     $ go get github.com/kintone/go-kintone
     $ go get github.com/howeyc/gopass
     $ go get golang.org/x/text/encoding
-    $ go get gopkg.in/yaml.v2
 
 build
 

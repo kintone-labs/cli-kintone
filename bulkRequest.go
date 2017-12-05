@@ -240,6 +240,11 @@ func newRequest(app *kintone.App, method, api string, body io.Reader) (*http.Req
 	} else {
 		req.Header.Set("X-Cybozu-API-Token", app.ApiToken)
 	}
+
+	if len(app.GetUserAgentHeader()) != 0 {
+		req.Header.Set("User-Agent", app.GetUserAgentHeader())
+	}
+
 	req.Header.Set("Content-Type", "application/json")
 	return req, nil
 }

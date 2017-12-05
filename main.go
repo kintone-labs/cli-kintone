@@ -3,10 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/howeyc/gopass"
@@ -14,8 +12,10 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
-	"gopkg.in/yaml.v2"
 )
+
+const NAME = "cli-kintone"
+const VERSION = "0.9.1"
 
 // Configure cli configuration
 type Configure struct {
@@ -41,28 +41,6 @@ type Configure struct {
 }
 
 var config Configure
-
-func getUserAgentHeader() string {
-	type ProjectConfigure struct {
-		Name    string `yaml:"name"`
-		Version string `yaml:"version"`
-	}
-
-	filename, _ := filepath.Abs("./.travis.yml")
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		return "cli-kintone"
-	}
-
-	var projectConfig = ProjectConfigure{}
-	err = yaml.Unmarshal(yamlFile, &projectConfig)
-	if err != nil {
-		return "cli-kintone"
-	}
-
-	return projectConfig.Name + "/" + projectConfig.Version
-}
 
 // IMPORT_ROW_LIMIT Limit of kintone app (POST/PUT)
 const IMPORT_ROW_LIMIT = 100
@@ -240,7 +218,7 @@ func main() {
 		app.SetBasicAuth(config.basicAuthUser, config.basicAuthPassword)
 	}
 
-	app.SetUserAgentHeader(getUserAgentHeader())
+	app.SetUserAgentHeader(NAME + "/" + VERSION)
 
 	var err error
 	// Old logic without force import/export

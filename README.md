@@ -44,7 +44,7 @@ https://github.com/kintone/cli-kintone/releases
 
     -d = "" : Domain name. Specify the FQDN.
     -a = 0 : App ID.
-    -u = "" : User's log in name
+    -u = "" : User's log in name.
     -p = "" : User's password.
     -t = "" : API token.     
     -g = 0 : Guest Space ID.
@@ -63,39 +63,40 @@ https://github.com/kintone/cli-kintone/releases
     
 ## Examples
 
-Export all columns from an app.
+### Export all columns from an app
 
     $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 
-Export the specified columns to csv file as Shif-JIS encoding.
+### Export the specified columns to csv file as Shif-JIS encoding
 
     $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 
-If the file has an $id column, the original data will be updated. If not, new row will be inserted.
+### Import specified file into an App
+If the import file has an $id column (or a field code for the Record number), records will be updated and/or added. If the value in $id matches a record number value, that record will be updated. It the value does not match, a new record will be added.
 
-    $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
-Export and download attachment files to ./download directory.
+### Export and download attachment files to ./mydownloads directory
 
-    $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b download
+    $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 
-Import and upload attachment files from ./upload directory.
+### Import and upload attachment files from ./myuploads directory
 
-    $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b upload -f <INPUT_FILE>
+    $ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 
-Import and update by selecting a key to bulk update.  
+### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
-e.g. “update_date",“*id",“status"
+e.g. “update_date",“*id",“status".
 
-    $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
-Import CSV from line 25 of the input file.
+### Import CSV from line 25 of the input file
 
      $ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 
-Import from standard input (stdin).
+### Import from standard input (stdin)
 
-     $ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+     $ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 
 ## Documents for Basic Usage
 English: https://developer.kintone.io/hc/en-us/articles/115002614853  

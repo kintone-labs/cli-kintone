@@ -235,7 +235,7 @@ func newRequest(app *kintone.App, method, api string, body io.Reader) (*http.Req
 	if err != nil {
 		return nil, err
 	}
-	if app.IsBasicAuth() {
+	if app.HasBasicAuth() {
 		req.SetBasicAuth(app.GetBasicAuthUser(), app.GetBasicAuthPassword())
 	}
 	if len(app.ApiToken) == 0 {

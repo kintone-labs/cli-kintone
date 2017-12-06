@@ -274,6 +274,15 @@ func uploadFile(app *kintone.App, filePath string) (string, error) {
 	}
 	defer fi.Close()
 
+	fileinfo, err := fi.Stat()
+
+	if err != nil {
+		return "", err
+	}
+
+	if fileinfo.Size() > 10*1024*1024 {
+		return "", fmt.Errorf("%s file must be less than 10 MB", filePath)
+	}
 
 	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
 	return fileKey, err

@@ -15,7 +15,7 @@ import (
 )
 
 const NAME = "cli-kintone"
-const VERSION = "0.9.1"
+const VERSION = "0.9.0"
 
 // Configure cli configuration
 type Configure struct {

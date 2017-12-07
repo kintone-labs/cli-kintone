@@ -225,7 +225,7 @@ func main() {
 				err = writeCsv(app, os.Stdout)
 			}
 		} else {
-			importDataFromFile(app)
+			err = importDataFromFile(app)
 		}
 	}
 	// Filter flag: the first flag have priority
@@ -237,7 +237,8 @@ func main() {
 		if config.filePath == "" {
 			err = importFromCSV(app, os.Stdin)
 		} else {
-			importDataFromFile(app)
+
+			err = importDataFromFile(app)
 		}
 	}
 

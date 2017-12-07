@@ -373,15 +373,13 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 		CLIMessage := ""
 		method := map[string]string{"POST": "INSERT", "PUT": "UPDATE"}
 		methodOccuredError := ""
-		if reflect.TypeOf(err).String() == "*main.BulkRequestsError" {
-			errorResp := &ErrorResponse{}
-			errorResp.Status = fmt.Sprintf("%v - %v", err.(*BulkRequestsError).HTTPStatus, err.(*BulkRequestsError).Message)
-			errorResp.Message = "Please check your params config"
-			errorResp.Errors = err.(*BulkRequestsError).Errors
-			errorResp.ID = err.(*BulkRequestsError).ID
-			errorResp.Code = err.(*BulkRequestsError).Code
+		if reflect.TypeOf(err).String() != "*main.BulkRequestsErrors" {
+			fmt.Printf(" => ERROR OCCURRED\n")
+			fmt.Printf("\n")
+			fmt.Println(err)
+			fmt.Printf("\nPROCESS STOPPED!\n\n")
+			os.Exit(1)
 		} else {
-
 			errorsResp := err.(*BulkRequestsErrors)
 			CLIMessage = fmt.Sprintf("ERROR.\nFor error details, please read the details above.\n")
 			CLIMessage += fmt.Sprintf("Lines %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
@@ -401,12 +399,15 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 				methodOccuredError = method[bulk.Requests[idx].Method]
 			}
 		}
-		fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
+		showTimeLog()
 		fmt.Printf("PROCESS STOPPED!\n\n")
 		if CLIMessage != "" {
 			fmt.Println(methodOccuredError, CLIMessage)
 		}
-		os.Exit(502)
+		os.Exit(1)
 	}
 	fmt.Println(" => SUCCESS")
+}
+func showTimeLog() {
+	fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
 }

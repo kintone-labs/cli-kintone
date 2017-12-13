@@ -118,9 +118,9 @@ func (bulk *BulkRequests) Request(app *kintone.App) (*DataResponseBulkPOST, inte
 	if err != nil {
 		return nil, err
 	}
-	body, err22 := parseResponse(resp)
-	if err22 != nil {
-		return nil, err22
+	body, errParse := parseResponse(resp)
+	if errParse != nil {
+		return nil, errParse
 	}
 	resp1, err := bulk.Decode(body)
 	if err != nil {
@@ -370,21 +370,30 @@ func (err *ErrorResponse) show(prefix string) {
 func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interface{}, lastRowImport, rowNumber uint64) {
 
 	if err != nil {
-		CLIMessage := ""
+		fmt.Printf(" => ERROR OCCURRED\n")
+		CLIMessage := fmt.Sprintf("ERROR.\nFor error details, please read the details above.\n")
+		CLIMessage += fmt.Sprintf("Lines %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
+
 		method := map[string]string{"POST": "INSERT", "PUT": "UPDATE"}
 		methodOccuredError := ""
 		if reflect.TypeOf(err).String() != "*main.BulkRequestsErrors" {
-			fmt.Printf(" => ERROR OCCURRED\n")
-			fmt.Printf("\n")
-			fmt.Println(err)
-			fmt.Printf("\nPROCESS STOPPED!\n\n")
-			os.Exit(1)
+			if reflect.TypeOf(err).String() != "*main.BulkRequestsError" {
+				fmt.Printf("\n")
+				fmt.Println(err)
+				fmt.Printf("\n")
+				// Reset CLI Message
+				CLIMessage = ""
+			} else {
+				errorResp := &ErrorResponse{}
+				errorResp.Status = err.(*BulkRequestsError).HTTPStatus
+				errorResp.Message = err.(*BulkRequestsError).Message
+				errorResp.Errors = err.(*BulkRequestsError).Errors
+				errorResp.ID = err.(*BulkRequestsError).ID
+				errorResp.Code = err.(*BulkRequestsError).Code
+				errorResp.show("")
+			}
 		} else {
 			errorsResp := err.(*BulkRequestsErrors)
-			CLIMessage = fmt.Sprintf("ERROR.\nFor error details, please read the details above.\n")
-			CLIMessage += fmt.Sprintf("Lines %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
-			fmt.Printf(" => ERROR OCCURRED\n")
-			fmt.Println("Status: ", errorsResp.HTTPStatus)
 			for idx, errorItem := range errorsResp.Results {
 				if errorItem.Code == "" {
 					continue
@@ -392,6 +401,7 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 				errorResp := &ErrorResponse{}
 				errorResp.ID = errorItem.ID
 				errorResp.Code = errorItem.Code
+				errorResp.Status = errorsResp.HTTPStatus
 				errorResp.Message = errorItem.Message
 				errorResp.Errors = errorItem.Errors
 

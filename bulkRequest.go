@@ -235,6 +235,9 @@ func newRequest(app *kintone.App, method, api string, body io.Reader) (*http.Req
 	if err != nil {
 		return nil, err
 	}
+	if app.HasBasicAuth() {
+		req.SetBasicAuth(app.GetBasicAuthUser(), app.GetBasicAuthPassword())
+	}
 	if len(app.ApiToken) == 0 {
 		req.Header.Set("X-Cybozu-Authorization", base64.StdEncoding.EncodeToString([]byte(app.User+":"+app.Password)))
 	} else {

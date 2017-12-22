@@ -14,6 +14,9 @@ import (
 	"golang.org/x/text/encoding/unicode"
 )
 
+const NAME = "cli-kintone"
+const VERSION = "0.9.0"
+
 // Configure cli configuration
 type Configure struct {
 	login             string
@@ -214,6 +217,8 @@ func main() {
 	if config.basicAuthUser != "" {
 		app.SetBasicAuth(config.basicAuthUser, config.basicAuthPassword)
 	}
+
+	app.SetUserAgentHeader(NAME + "/" + VERSION)
 
 	var err error
 	// Old logic without force import/export

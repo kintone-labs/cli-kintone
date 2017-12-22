@@ -7,7 +7,6 @@ import (
 	"log"
 	"regexp"
 	"strconv"
-	"time"
 
 	"github.com/kintone/go-kintone"
 )
@@ -172,7 +171,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 				}
 			}
 			if rowNumber%(ConstBulkRequestLimitRecordOption) == 0 {
-				fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
+				showTimeLog()
 				fmt.Printf("Start from lines: %d - %d", lastRowImport, rowNumber)
 
 				resp, err := bulkRequests.Request(app)
@@ -185,12 +184,12 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 		}
 	}
 	if len(bulkRequests.Requests) > 0 {
-		fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
+		showTimeLog()
 		fmt.Printf("Start from lines: %d - %d", lastRowImport, rowNumber)
 		resp, err := bulkRequests.Request(app)
 		bulkRequests.HandelResponse(resp, err, lastRowImport, rowNumber)
 	}
-	fmt.Printf("%v: ", time.Now().Format("[2006-01-02 15:04:05]"))
+	showTimeLog()
 	fmt.Printf("DONE\n")
 
 	return nil

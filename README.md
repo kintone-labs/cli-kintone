@@ -72,13 +72,19 @@ https://github.com/kintone/cli-kintone/releases
     $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 
 ### Import specified file into an App
-Records are updated and/or added when the import file contains either an $id column, or a column representing a key field (denoted with a * symbol before the field code name).  
+
+    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+
+Note 1.
+Records are updated and/or added when the import file contains an $id column.
 If the value in $id matches a record number value, that record will be updated.  
 If the value in $id is empty, a new record will be added.  
 If the value in $id does not match a record number value, the import process will stop, and an error will occur.  
-(The same rules apply for key field values in the input file matching or not matching other key field values in the App)
 
-    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+Note 2.
+Records are updated when the import file contains a column representing a key field (denoted with a * symbol before the field code name).  
+If the value in the key field matches a record number value, that record will be updated.  
+If the value in the key field is empty, or does not match a key field in the App, the import process will stop, and an error will occur.
 
 ### Export and download attachment files to ./mydownloads directory
 

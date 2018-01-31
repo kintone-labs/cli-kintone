@@ -72,7 +72,11 @@ https://github.com/kintone/cli-kintone/releases
     $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 
 ### Import specified file into an App
-If the import file has an $id column (or a field code for the Record number), records will be updated and/or added. If the value in $id matches a record number value, that record will be updated. It the value does not match, a new record will be added.
+Records are updated and/or added when the import file contains either an $id column, or a column representing a key field (denoted with a * symbol before the field code name).  
+If the value in $id matches a record number value, that record will be updated.  
+If the value in $id is empty, a new record will be added.  
+If the value in $id does not match a record number value, the import process will stop, and an error will occur.  
+(The same rules apply for key field values in the input file matching or not matching other key field values in the App)
 
     $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 
@@ -105,7 +109,7 @@ Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 ## Restriction
 * The limit of file upload size is 10 MB.
 
-## Licence
+## License
 
 GPL v2
 

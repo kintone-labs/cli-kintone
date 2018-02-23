@@ -16,6 +16,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
+// SubRecord structure
 type SubRecord struct {
 	Id     uint64
 	Fields map[string]interface{}

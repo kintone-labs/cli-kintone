@@ -4,7 +4,7 @@ package main
 import (
 	"os"
   "strconv"
-  "github.com/kintone/go-kintone"
+  "github.com/ryokdy/go-kintone"
 )
 
 func newApp() *kintone.App {

@@ -4,65 +4,54 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
-
-	"github.com/howeyc/gopass"
+	"os"
 	"github.com/kintone/go-kintone"
+	"github.com/howeyc/gopass"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
 )
 
-const NAME = "cli-kintone"
-const VERSION = "0.9.0"
-
-// Configure cli configuration
 type Configure struct {
-	login             string
-	password          string
-	basicAuthUser     string
+	login string
+	password string
+	basicAuthUser string
 	basicAuthPassword string
-	apiToken          string
-	domain            string
-	basic             string
-	format            string
-	query             string
-	appId             uint64
-	fields            []string
-	filePath          string
-	deleteAll         bool
-	encoding          string
-	guestSpaceId      uint64
-	fileDir           string
-	line              uint64
-	isImport          bool
-	isExport          bool
+	apiToken string
+	domain string
+	basic string
+	format string
+	query string
+	appId uint64
+	fields []string
+	filePath string
+	deleteAll bool
+	encoding string
+	guestSpaceId uint64
+	fileDir string
 }
 
 var config Configure
 
-// IMPORT_ROW_LIMIT Limit of kintone app (POST/PUT)
 const IMPORT_ROW_LIMIT = 100
-
-// IMPORT_ROW_LIMIT Limit of kintone app (GET)
 const EXPORT_ROW_LIMIT = 500
 
 type Column struct {
-	Code       string
-	Type       string
-	IsSubField bool
-	Table      string
+	Code        string
+	Type        string
+	IsSubField  bool
+	Table       string
 }
 
 type Columns []*Column
 
 func (p Columns) Len() int {
-	return len(p)
+  return len(p)
 }
 
 func (p Columns) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
+  p[i], p[j] = p[j], p[i]
 }
 
 func (p Columns) Less(i, j int) bool {
@@ -162,11 +151,8 @@ func main() {
 	flag.StringVar(&config.encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'")
 	flag.StringVar(&config.fileDir, "b", "", "Attachment file directory")
 
-	flag.Uint64Var(&config.line, "l", 1, "The position index of data in the input file")
-	flag.BoolVar(&config.isImport, "import", false, "Force import")
-	flag.BoolVar(&config.isExport, "export", false, "Force export")
-
 	flag.Parse()
+
 	if config.appId == 0 || (config.apiToken == "" && (config.domain == "" || config.login == "")) {
 		flag.PrintDefaults()
 		return
@@ -178,10 +164,8 @@ func main() {
 
 	if colNames != "" {
 		config.fields = strings.Split(colNames, ",")
-		for i, field := range config.fields {
-			config.fields[i] = strings.TrimSpace(field)
-		}
 	}
+
 
 	var app *kintone.App
 
@@ -218,58 +202,22 @@ func main() {
 		app.SetBasicAuth(config.basicAuthUser, config.basicAuthPassword)
 	}
 
-	app.SetUserAgentHeader(NAME + "/" + VERSION)
-
 	var err error
-	// Old logic without force import/export
-	if config.isImport == false && config.isExport == false {
-		if config.filePath == "" {
-			if config.format == "json" {
-				err = writeJson(app, os.Stdout)
-			} else {
-				err = writeCsv(app, os.Stdout)
-			}
-		} else {
-			err = importDataFromFile(app)
-		}
-	}
-	// Filter flag: the first flag have priority
-	if config.isImport && config.isExport {
-		log.Fatal("The options --import and --export cannot be specified together!")
-	}
-
-	if config.isImport {
-		if config.filePath == "" {
-			err = importFromCSV(app, os.Stdin)
-		} else {
-
-			err = importDataFromFile(app)
-		}
-	}
-
-	if config.isExport {
-		if config.filePath != "" {
-			log.Fatal("The -f option is not supported with the --export option.")
-		}
+	if config.filePath == "" {
 		if config.format == "json" {
 			err = writeJson(app, os.Stdout)
 		} else {
 			err = writeCsv(app, os.Stdout)
 		}
+	} else {
+		var file *os.File
+		file, err = os.Open(config.filePath)
+		if err == nil {
+			defer file.Close()
+			err = readCsv(app, file)
+		}
 	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func importDataFromFile(app *kintone.App) error {
-	var file *os.File
-	var err error
-	file, err = os.Open(config.filePath)
-	if err == nil {
-		defer file.Close()
-		err = importFromCSV(app, file)
-	}
-	return err
 }

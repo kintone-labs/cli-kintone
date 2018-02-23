@@ -5,43 +5,34 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path"
 	"regexp"
-	"strconv"
 	"strings"
+	"strconv"
 	"time"
+	"path"
+	"errors"
 
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
-type SubRecord struct {
-	Id     uint64
-	Fields map[string]interface{}
-}
-
 func getReader(reader io.Reader) io.Reader {
 	encoding := getEncoding()
-	if encoding == nil {
+	if (encoding == nil) {
 		return reader
 	}
 	return transform.NewReader(reader, encoding.NewDecoder())
 }
 
-func getSubRecord(tableName string, tables map[string]*SubRecord) *SubRecord {
-	table := tables[tableName]
-	if table == nil {
-		fields := make(map[string]interface{})
-		table = &SubRecord{0, fields}
-		tables[tableName] = table
-	}
-
-	return table
-}
-
-func addSubField(app *kintone.App, column *Column, col string, table *SubRecord) error {
+func addSubField(app *kintone.App, column *Column, col string, tables map[string]map[string]interface{}) error {
 	if len(col) == 0 {
 		return nil
+	}
+
+	table := tables[column.Table]
+	if table == nil {
+		table = make(map[string]interface{})
+		tables[column.Table] = table
 	}
 
 	if column.Type == kintone.FT_FILE {
@@ -50,18 +41,19 @@ func addSubField(app *kintone.App, column *Column, col string, table *SubRecord)
 			return err
 		}
 		if field != nil {
-			table.Fields[column.Code] = field
+			table[column.Code] = field
 		}
 	} else {
 		field := getField(column.Type, col)
 		if field != nil {
-			table.Fields[column.Code] = field
+			table[column.Code] = field
 		}
 	}
 	return nil
 }
 
 func readCsv(app *kintone.App, _reader io.Reader) error {
+
 	reader := csv.NewReader(getReader(_reader))
 
 	head := true
@@ -133,20 +125,13 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 			record := make(map[string]interface{})
 
 			for {
-				tables := make(map[string]*SubRecord)
+				tables := make(map[string]map[string]interface{})
 				for i, col := range row {
 					column := columns[i]
 					if column.IsSubField {
-						table := getSubRecord(column.Table, tables)
-						err := addSubField(app, column, col, table)
+						err := addSubField(app, column, col, tables)
 						if err != nil {
 							return err
-						}
-					} else if column.Type == kintone.FT_SUBTABLE {
-						if col != "" {
-							subId, _ := strconv.ParseUint(col, 10, 64)
-							table := getSubRecord(column.Code, tables)
-							table.Id = subId
 						}
 					} else {
 						if hasTable && row[0] != "*" {
@@ -154,7 +139,7 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 						}
 						if column.Code == "$id" {
 							if col != "" {
-								id, _ = strconv.ParseUint(col, 10, 64)
+								id, err = strconv.ParseUint(col, 10, 64)
 							}
 						} else if column.Code == "$revision" {
 
@@ -183,7 +168,7 @@ func readCsv(app *kintone.App, _reader io.Reader) error {
 					}
 
 					stf := record[key].(kintone.SubTableField)
-					stf = append(stf, kintone.NewRecordWithId(table.Id, table.Fields))
+					stf = append(stf, kintone.NewRecord(table))
 					record[key] = stf
 				}
 
@@ -276,19 +261,19 @@ func uploadFile(app *kintone.App, filePath string) (string, error) {
 
 	fileinfo, err := fi.Stat()
 
-	if err != nil {
-		return "", err
-	}
+  if err != nil {
+    return "", err
+  }
 
-	if fileinfo.Size() > 10*1024*1024 {
-		return "", fmt.Errorf("%s file must be less than 10 MB", filePath)
+  if fileinfo.Size() > 10 * 1024 * 1024 {
+		return "", errors.New(fmt.Sprintf("%s file must be less than 10 MB.", filePath))
 	}
 
 	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
 	return fileKey, err
 }
 
-func insert(app *kintone.App, recs []*kintone.Record) error {
+func insert(app *kintone.App, recs []*kintone.Record)  error {
 	var err error
 
 	_, err = app.AddRecords(recs)
@@ -296,7 +281,7 @@ func insert(app *kintone.App, recs []*kintone.Record) error {
 	return err
 }
 
-func update(app *kintone.App, recs []*kintone.Record, keyField string) error {
+func update(app *kintone.App, recs []*kintone.Record, keyField string)  error {
 	var err error
 	if keyField != "" {
 		err = app.UpdateRecordsByKey(recs, true, keyField)

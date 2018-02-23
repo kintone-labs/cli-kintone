@@ -86,10 +86,6 @@ func makeColumns(fields map[string]*kintone.FieldInfo) (Columns) {
 			continue
 		}
 		if val.Type == kintone.FT_SUBTABLE {
-			// record id for subtable
-			column := &Column{Code: val.Code, Type: val.Type}
-			columns = append(columns, column)
-
 			for _, subField := range val.Fields {
 				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val.Code}
 				columns = append(columns, column)
@@ -113,10 +109,6 @@ func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []st
 			continue
 		}
 		if column.Type == kintone.FT_SUBTABLE {
-			// record id for subtable
-			column := &Column{Code: column.Code, Type: column.Type}
-			columns = append(columns, column)
-
 			// append all sub fields
 			field := fields[val]
 
@@ -225,11 +217,6 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 						fmt.Fprintf(writer, "\"%d\"",  record.Id())
 					} else if f.Code == "$revision" {
 						fmt.Fprintf(writer, "\"%d\"",  record.Revision())
-					} else if f.Type == kintone.FT_SUBTABLE {
-						table := record.Fields[f.Code].(kintone.SubTableField)
-						if j < len(table) {
-							fmt.Fprintf(writer, "\"%d\"",  table[j].Id())
-						}
 					} else if f.IsSubField {
 						table := record.Fields[f.Table].(kintone.SubTableField)
 						if j < len(table) {

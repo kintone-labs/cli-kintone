@@ -383,7 +383,7 @@ func (bulk *BulkRequests) HandelResponse(rep *DataResponseBulkPOST, err interfac
 		CLIMessage += fmt.Sprintf("Lines %d to %d of the imported file contain errors. Please fix the errors on the file, and re-import it with the flag \"-l %d\"\n", lastRowImport, rowNumber, lastRowImport)
 
 		method := map[string]string{"POST": "INSERT", "PUT": "UPDATE"}
-		methodOccuredError := ""
+		methodOccuredError := "REQUEST"
 		if reflect.TypeOf(err).String() != "*main.BulkRequestsErrors" {
 			if reflect.TypeOf(err).String() != "*main.BulkRequestsError" {
 				fmt.Printf("\n")

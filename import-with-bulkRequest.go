@@ -4,296 +4,34 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
 	"os"
-	"regexp"
-	"strings"
-	"strconv"
-	"time"
 	"path"
-	"errors"
+	"regexp"
+	"strconv"
+	"strings"
+	"time"
 
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
+type SubRecord struct {
+	Id     uint64
+	Fields map[string]interface{}
+}
+
 func getReader(reader io.Reader) io.Reader {
 	encoding := getEncoding()
-	if (encoding == nil) {
+	if encoding == nil {
 		return reader
 	}
 	return transform.NewReader(reader, encoding.NewDecoder())
 }
 
-func addSubField(app *kintone.App, column *Column, col string, tables map[string]map[string]interface{}) error {
-	if len(col) == 0 {
-		return nil
-	}
-
-	table := tables[column.Table]
-	if table == nil {
-		table = make(map[string]interface{})
-		tables[column.Table] = table
-	}
-
-	if column.Type == kintone.FT_FILE {
-		field, err := uploadFiles(app, col)
-		if err != nil {
-			return err
-		}
-		if field != nil {
-			table[column.Code] = field
-		}
-	} else {
-		field := getField(column.Type, col)
-		if field != nil {
-			table[column.Code] = field
-		}
-	}
-	return nil
-}
-
-func readCsv(app *kintone.App, _reader io.Reader) error {
-
-	reader := csv.NewReader(getReader(_reader))
-
-	head := true
-	recordsInsert := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-	recordsUpdate := make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-
-	var columns Columns
-
-	// retrieve field list
-	fields, err := getFields(app)
-	if err != nil {
-		return err
-	}
-
-	if config.deleteAll {
-		err = deleteRecords(app, config.query)
-		if err != nil {
-			return err
-		}
-		config.deleteAll = false
-	}
-
-	keyField := ""
-	hasTable := false
-	var peeked *[]string
-	for {
-		var err error
-		var row []string
-		if peeked == nil {
-			row, err = reader.Read()
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return err
-			}
-		} else {
-			row = *peeked
-			peeked = nil
-		}
-		//fmt.Printf("%#v\n", row)
-		if head && columns == nil {
-			columns = make([]*Column, 0)
-			for _, col := range row {
-				re := regexp.MustCompile("^(.*)\\[(.*)\\]$")
-				match := re.FindStringSubmatch(col)
-				if match != nil {
-					// for backward compatible
-					column := &Column{Code: match[1], Type: match[2]}
-					columns = append(columns, column)
-					col = column.Code
-				} else {
-					if len(col) > 0 && col[0] == '*' {
-						col = col[1:]
-						keyField = col
-					}
-					column := getColumn(col, fields)
-					if column.IsSubField {
-						if row[0] == "" || row[0] == "*" {
-							hasTable = true
-						}
-					}
-					columns = append(columns, column)
-				}
-			}
-			head = false
-		} else {
-			var id uint64 = 0
-			var err error
-			record := make(map[string]interface{})
-
-			for {
-				tables := make(map[string]map[string]interface{})
-				for i, col := range row {
-					column := columns[i]
-					if column.IsSubField {
-						err := addSubField(app, column, col, tables)
-						if err != nil {
-							return err
-						}
-					} else {
-						if hasTable && row[0] != "*" {
-							continue
-						}
-						if column.Code == "$id" {
-							if col != "" {
-								id, err = strconv.ParseUint(col, 10, 64)
-							}
-						} else if column.Code == "$revision" {
-
-						} else if column.Type == kintone.FT_FILE {
-							field, err := uploadFiles(app, col)
-							if err != nil {
-								return err
-							}
-							if field != nil {
-								record[column.Code] = field
-							}
-						} else {
-							if column.Code == keyField && col == "" {
-							} else {
-								field := getField(column.Type, col)
-								if field != nil {
-									record[column.Code] = field
-								}
-							}
-						}
-					}
-				}
-				for key, table := range tables {
-					if record[key] == nil {
-						record[key] = getField(kintone.FT_SUBTABLE, "")
-					}
-
-					stf := record[key].(kintone.SubTableField)
-					stf = append(stf, kintone.NewRecord(table))
-					record[key] = stf
-				}
-
-				if !hasTable {
-					break
-				}
-				row, err = reader.Read()
-				if err == io.EOF {
-					break
-				} else if err != nil {
-					return err
-				}
-				if len(row) > 0 && row[0] == "*" {
-					peeked = &row
-					break
-				}
-			}
-
-			_, hasKeyField := record[keyField]
-			if id != 0 || (keyField != "" && hasKeyField) {
-				setRecordUpdatable(record, columns)
-				recordsUpdate = append(recordsUpdate, kintone.NewRecordWithId(id, record))
-				if len(recordsUpdate) >= IMPORT_ROW_LIMIT {
-					update(app, recordsUpdate[:], keyField)
-					recordsUpdate = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-				}
-			} else {
-				recordsInsert = append(recordsInsert, kintone.NewRecord(record))
-				if len(recordsInsert) >= IMPORT_ROW_LIMIT {
-					insert(app, recordsInsert[:])
-					recordsInsert = make([]*kintone.Record, 0, IMPORT_ROW_LIMIT)
-				}
-			}
-		}
-	}
-	if len(recordsUpdate) > 0 {
-		err = update(app, recordsUpdate[:], keyField)
-		if err != nil {
-			return err
-		}
-	}
-	if len(recordsInsert) > 0 {
-		err = insert(app, recordsInsert[:])
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func setRecordUpdatable(record map[string]interface{}, columns Columns) {
-	for _, col := range columns {
-		switch col.Type {
-		case
-			kintone.FT_CREATOR,
-			kintone.FT_MODIFIER,
-			kintone.FT_CTIME,
-			kintone.FT_MTIME:
-			delete(record, col.Code)
-		}
-	}
-}
-
-func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
-	value = strings.TrimSpace(value)
-	if config.fileDir == "" || value == "" {
-		return nil, nil
-	}
-
-	files := strings.Split(value, "\n")
-	var ret kintone.FileField = []kintone.File{}
-	for _, file := range files {
-		path := fmt.Sprintf("%s%c%s", config.fileDir, os.PathSeparator, file)
-		fileKey, err := uploadFile(app, path)
-		if err != nil {
-			return nil, err
-		}
-		ret = append(ret, kintone.File{FileKey: fileKey})
-	}
-	return ret, nil
-}
-
-func uploadFile(app *kintone.App, filePath string) (string, error) {
-	fi, err := os.Open(filePath)
-	if err != nil {
-		return "", err
-	}
-	defer fi.Close()
-
-	fileinfo, err := fi.Stat()
-
-  if err != nil {
-    return "", err
-  }
-
-  if fileinfo.Size() > 10 * 1024 * 1024 {
-		return "", errors.New(fmt.Sprintf("%s file must be less than 10 MB.", filePath))
-	}
-
-	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
-	return fileKey, err
-}
-
-func insert(app *kintone.App, recs []*kintone.Record)  error {
-	var err error
-
-	_, err = app.AddRecords(recs)
-
-	return err
-}
-
-func update(app *kintone.App, recs []*kintone.Record, keyField string)  error {
-	var err error
-	if keyField != "" {
-		err = app.UpdateRecordsByKey(recs, true, keyField)
-	} else {
-		err = app.UpdateRecords(recs, true)
-	}
-	return err
-}
-
 // delete specific records
 func deleteRecords(app *kintone.App, query string) error {
-	var lastId uint64 = 0
+	var lastID uint64
 	for {
 		ids := make([]uint64, 0, IMPORT_ROW_LIMIT)
 
@@ -326,14 +64,279 @@ func deleteRecords(app *kintone.App, query string) error {
 		if len(records) < IMPORT_ROW_LIMIT {
 			break
 		}
-		if lastId == ids[0] {
+		if lastID == ids[0] {
 			// prevent an inifinite loop
 			return fmt.Errorf("Unexpected error occured during deleting")
 		}
-		lastId = ids[0]
+		lastID = ids[0]
 	}
 
 	return nil
+}
+func getSubRecord(tableName string, tables map[string]*SubRecord) *SubRecord {
+	table := tables[tableName]
+	if table == nil {
+		fields := make(map[string]interface{})
+		table = &SubRecord{0, fields}
+		tables[tableName] = table
+	}
+
+	return table
+}
+func addSubField(app *kintone.App, column *Column, col string, table *SubRecord) error {
+	if len(col) == 0 {
+		return nil
+	}
+
+	if column.Type == kintone.FT_FILE {
+		field, err := uploadFiles(app, col)
+		if err != nil {
+			return err
+		}
+		if field != nil {
+			table.Fields[column.Code] = field
+		}
+	} else {
+		field := getField(column.Type, col)
+		if field != nil {
+			table.Fields[column.Code] = field
+		}
+	}
+	return nil
+}
+func importFromCSV(app *kintone.App, _reader io.Reader) error {
+
+	reader := csv.NewReader(getReader(_reader))
+
+	head := true
+	var columns Columns
+
+	var nextRowImport uint64
+	nextRowImport = config.Line
+	bulkRequests := &BulkRequests{}
+	// retrieve field list
+	fields, err := getFields(app)
+	if err != nil {
+		return err
+	}
+
+	if config.DeleteAll {
+		err = deleteRecords(app, config.Query)
+		if err != nil {
+			return err
+		}
+		config.DeleteAll = false
+	}
+
+	keyField := ""
+	hasTable := false
+	var peeked *[]string
+	var rowNumber uint64
+	for rowNumber = 1; ; rowNumber++ {
+		var err error
+		var row []string
+		if peeked == nil {
+			row, err = reader.Read()
+			if err == io.EOF {
+				rowNumber--
+				break
+			} else if err != nil {
+				return err
+			}
+		} else {
+			row = *peeked
+			peeked = nil
+		}
+		if head && columns == nil {
+			columns = make([]*Column, 0)
+			for _, col := range row {
+				re := regexp.MustCompile("^(.*)\\[(.*)\\]$")
+				match := re.FindStringSubmatch(col)
+				if match != nil {
+					// for backward compatible
+					column := &Column{Code: match[1], Type: match[2]}
+					columns = append(columns, column)
+					col = column.Code
+				} else {
+					if len(col) > 0 && col[0] == '*' {
+						col = col[1:]
+						keyField = col
+					}
+					column := getColumn(col, fields)
+					if column.IsSubField {
+						if row[0] == "" || row[0] == "*" {
+							hasTable = true
+						}
+					}
+					columns = append(columns, column)
+				}
+			}
+			head = false
+		} else {
+			if rowNumber < config.Line {
+				continue
+			}
+			var id uint64
+			var err error
+			record := make(map[string]interface{})
+
+			for {
+				tables := make(map[string]*SubRecord)
+				for i, col := range row {
+					column := columns[i]
+					if column.IsSubField {
+						table := getSubRecord(column.Table, tables)
+						err := addSubField(app, column, col, table)
+						if err != nil {
+							return err
+						}
+					} else if column.Type == kintone.FT_SUBTABLE {
+						if col != "" {
+							subID, _ := strconv.ParseUint(col, 10, 64)
+							table := getSubRecord(column.Code, tables)
+							table.Id = subID
+						}
+					} else {
+						if hasTable && row[0] != "*" {
+							continue
+						}
+						if column.Code == "$id" {
+							if col != "" {
+								id, _ = strconv.ParseUint(col, 10, 64)
+							}
+						} else if column.Code == "$revision" {
+
+						} else if column.Type == kintone.FT_FILE {
+							field, err := uploadFiles(app, col)
+							if err != nil {
+								return err
+							}
+							if field != nil {
+								record[column.Code] = field
+							}
+						} else {
+							if column.Code == keyField && col == "" {
+							} else {
+								field := getField(column.Type, col)
+								if field != nil {
+									record[column.Code] = field
+								}
+							}
+						}
+					}
+				}
+				for key, table := range tables {
+					if record[key] == nil {
+						record[key] = getField(kintone.FT_SUBTABLE, "")
+					}
+
+					stf := record[key].(kintone.SubTableField)
+					stf = append(stf, kintone.NewRecordWithId(table.Id, table.Fields))
+					record[key] = stf
+				}
+
+				if !hasTable {
+					break
+				}
+				row, err = reader.Read()
+				if err == io.EOF {
+					break
+				} else if err != nil {
+					return err
+				}
+				if len(row) > 0 && row[0] == "*" {
+					peeked = &row
+					break
+				}
+			}
+
+			_, hasKeyField := record[keyField]
+			if id != 0 || (keyField != "" && hasKeyField) {
+				setRecordUpdatable(record, columns)
+				err = bulkRequests.ImportDataUpdate(app, kintone.NewRecordWithId(id, record), keyField)
+				if err != nil {
+					log.Fatalln(err)
+				}
+			} else {
+				err = bulkRequests.ImportDataInsert(app, kintone.NewRecord(record))
+				if err != nil {
+					log.Fatalln(err)
+				}
+			}
+			if (rowNumber-nextRowImport+1)%(ConstBulkRequestLimitRecordOption) == 0 {
+				showTimeLog()
+				fmt.Printf("Start from lines: %d - %d", nextRowImport, rowNumber)
+
+				resp, err := bulkRequests.Request(app)
+				bulkRequests.HandelResponse(resp, err, nextRowImport, rowNumber)
+
+				bulkRequests.Requests = bulkRequests.Requests[:0]
+				nextRowImport = rowNumber + 1
+
+			}
+		}
+	}
+	if len(bulkRequests.Requests) > 0 {
+		showTimeLog()
+		fmt.Printf("Start from lines: %d - %d", nextRowImport, rowNumber)
+		resp, err := bulkRequests.Request(app)
+		bulkRequests.HandelResponse(resp, err, nextRowImport, rowNumber)
+	}
+	showTimeLog()
+	fmt.Printf("DONE\n")
+
+	return nil
+}
+func setRecordUpdatable(record map[string]interface{}, columns Columns) {
+	for _, col := range columns {
+		switch col.Type {
+		case
+			kintone.FT_CREATOR,
+			kintone.FT_MODIFIER,
+			kintone.FT_CTIME,
+			kintone.FT_MTIME:
+			delete(record, col.Code)
+		}
+	}
+}
+func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
+	value = strings.TrimSpace(value)
+	if config.FileDir == "" || value == "" {
+		return nil, nil
+	}
+
+	files := strings.Split(value, "\n")
+	var ret kintone.FileField = []kintone.File{}
+	for _, file := range files {
+		path := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, file)
+		fileKey, err := uploadFile(app, path)
+		if err != nil {
+			return nil, err
+		}
+		ret = append(ret, kintone.File{FileKey: fileKey})
+	}
+	return ret, nil
+}
+
+func uploadFile(app *kintone.App, filePath string) (string, error) {
+	fi, err := os.Open(filePath)
+	if err != nil {
+		return "", err
+	}
+	defer fi.Close()
+
+	fileinfo, err := fi.Stat()
+
+	if err != nil {
+		return "", err
+	}
+
+	if fileinfo.Size() > 10*1024*1024 {
+		return "", fmt.Errorf("%s file must be less than 10 MB", filePath)
+	}
+
+	fileKey, err := app.Upload(path.Base(filePath), "application/octet-stream", fi)
+	return fileKey, err
 }
 
 func getField(fieldType string, value string) interface{} {
@@ -351,23 +354,22 @@ func getField(fieldType string, value string) interface{} {
 	case kintone.FT_CHECK_BOX:
 		if len(value) == 0 {
 			return kintone.CheckBoxField([]string{})
-		} else {
-			return kintone.CheckBoxField(strings.Split(value, "\n"))
 		}
+		return kintone.CheckBoxField(strings.Split(value, "\n"))
 	case kintone.FT_RADIO:
 		return kintone.RadioButtonField(value)
 	case kintone.FT_SINGLE_SELECT:
 		if len(value) == 0 {
 			return kintone.SingleSelectField{Valid: false}
-		} else {
-			return kintone.SingleSelectField{String: value, Valid: true}
 		}
+		return kintone.SingleSelectField{String: value, Valid: true}
+
 	case kintone.FT_MULTI_SELECT:
 		if len(value) == 0 {
 			return kintone.MultiSelectField([]string{})
-		} else {
-			return kintone.MultiSelectField(strings.Split(value, "\n"))
 		}
+		return kintone.MultiSelectField(strings.Split(value, "\n"))
+
 	case kintone.FT_FILE:
 		return nil
 	case kintone.FT_LINK:
@@ -375,33 +377,32 @@ func getField(fieldType string, value string) interface{} {
 	case kintone.FT_DATE:
 		if value == "" {
 			return kintone.DateField{Valid: false}
-		} else {
-			dt, err := time.Parse("2006-01-02", value)
-			if err == nil {
-				return kintone.DateField{Date: dt, Valid: true}
-			}
-			dt, err = time.Parse("2006/1/2", value)
-			if err == nil {
-				return kintone.DateField{Date: dt, Valid: true}
-			}
 		}
+		dt, err := time.Parse("2006-01-02", value)
+		if err == nil {
+			return kintone.DateField{Date: dt, Valid: true}
+		}
+		dt, err = time.Parse("2006/1/2", value)
+		if err == nil {
+			return kintone.DateField{Date: dt, Valid: true}
+		}
+
 	case kintone.FT_TIME:
 		if value == "" {
 			return kintone.TimeField{Valid: false}
-		} else {
-			dt, err := time.Parse("15:04:05", value)
-			if err == nil {
-				return kintone.TimeField{Time: dt, Valid: true}
-			}
 		}
+		dt, err := time.Parse("15:04:05", value)
+		if err == nil {
+			return kintone.TimeField{Time: dt, Valid: true}
+		}
+
 	case kintone.FT_DATETIME:
 		if value == "" {
 			return kintone.DateTimeField{Valid: false}
-		} else {
-			dt, err := time.Parse(time.RFC3339, value)
-			if err == nil {
-				return kintone.DateTimeField{Time: dt, Valid: true}
-			}
+		}
+		dt, err := time.Parse(time.RFC3339, value)
+		if err == nil {
+			return kintone.DateTimeField{Time: dt, Valid: true}
 		}
 	case kintone.FT_USER:
 		users := strings.Split(value, "\n")

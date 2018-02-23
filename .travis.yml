@@ -1,12 +1,13 @@
 language: go
 go:
-  - 1.7
+  - 1.9.3
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/kintone/go-kintone
   - go get github.com/howeyc/gopass
   - go get golang.org/x/text/encoding
   - go get github.com/mitchellh/gox
+  - go get github.com/jessevdk/go-flags
 script:
   - go vet -x ./...
   - gox -osarch="linux/amd64" -output build/linux-x64/cli-kintone

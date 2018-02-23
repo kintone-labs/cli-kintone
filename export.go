@@ -4,52 +4,51 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
-	//"sort"
+
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
-
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, bool, error) {
 
 	r := regexp.MustCompile(`limit\s+\d+`)
-	if r.MatchString(config.query) {
-		records, err := app.GetRecords(fields, config.query)
+	if r.MatchString(config.Query) {
+		records, err := app.GetRecords(fields, config.Query)
 
 		if err != nil {
 			return nil, true, err
 		}
 		return records, true, nil
-	} else {
-		newQuery := config.query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
-		records, err := app.GetRecords(fields, newQuery)
-
-		if err != nil {
-			return nil, true, err
-		}
-		return records, (len(records) < EXPORT_ROW_LIMIT), nil
 	}
+	newQuery := config.Query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
+	records, err := app.GetRecords(fields, newQuery)
+
+	if err != nil {
+		return nil, true, err
+	}
+	return records, (len(records) < EXPORT_ROW_LIMIT), nil
+
 }
 
 func getWriter(writer io.Writer) io.Writer {
 	encoding := getEncoding()
-	if (encoding == nil) {
+	if encoding == nil {
 		return writer
 	}
 	return transform.NewWriter(writer, encoding.NewEncoder())
 }
 
-func writeJson(app *kintone.App, _writer io.Writer) error {
+func writeJSON(app *kintone.App, _writer io.Writer) error {
 	i := 0
 	offset := int64(0)
 	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
-	for ;;offset += EXPORT_ROW_LIMIT {
-		records, eof, err := getRecords(app, config.fields, offset)
+	for ; ; offset += EXPORT_ROW_LIMIT {
+		records, eof, err := getRecords(app, config.Fields, offset)
 		if err != nil {
 			return err
 		}
@@ -60,7 +59,7 @@ func writeJson(app *kintone.App, _writer io.Writer) error {
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
 			fmt.Fprint(writer, json)
-			i += 1
+			i++
 		}
 		if eof {
 			break
@@ -71,7 +70,7 @@ func writeJson(app *kintone.App, _writer io.Writer) error {
 	return nil
 }
 
-func makeColumns(fields map[string]*kintone.FieldInfo) (Columns) {
+func makeColumns(fields map[string]*kintone.FieldInfo) Columns {
 	columns := make([]*Column, 0)
 
 	var column *Column
@@ -99,7 +98,7 @@ func makeColumns(fields map[string]*kintone.FieldInfo) (Columns) {
 	return columns
 }
 
-func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []string) (Columns) {
+func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []string) Columns {
 	columns := make([]*Column, 0)
 
 	for _, val := range partialFields {
@@ -161,8 +160,8 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 	}
 
 	hasTable := false
-	for ;;offset += EXPORT_ROW_LIMIT {
-		records, eof, err := getRecords(app, config.fields, offset)
+	for ; ; offset += EXPORT_ROW_LIMIT {
+		records, eof, err := getRecords(app, config.Fields, offset)
 		if err != nil {
 			return err
 		}
@@ -170,30 +169,30 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 		for _, record := range records {
 			if i == 0 {
 				// write csv header
-				if config.fields == nil {
+				if config.Fields == nil {
 					columns = makeColumns(fields)
 				} else {
-					columns = makePartialColumns(fields, config.fields)
+					columns = makePartialColumns(fields, config.Fields)
 				}
 				//sort.Sort(columns)
 				j := 0
 				hasTable = hasSubTable(columns)
 				if hasTable {
-					fmt.Fprint(writer, "*");
+					fmt.Fprint(writer, "*")
 					j++
 				}
 				for _, f := range columns {
 					if j > 0 {
-						fmt.Fprint(writer, ",");
+						fmt.Fprint(writer, ",")
 					}
-					fmt.Fprint(writer, "\"" + f.Code + "\"")
+					fmt.Fprint(writer, "\""+f.Code+"\"")
 					j++
 				}
-				fmt.Fprint(writer, "\r\n");
+				fmt.Fprint(writer, "\r\n")
 			}
-			rowId := record.Id()
-			if rowId == 0 {
-				rowId = i
+			rowID := record.Id()
+			if rowID == 0 {
+				rowID = i
 			}
 
 			// determine subtable's row count
@@ -203,49 +202,49 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 				k := 0
 				if hasTable {
 					if j == 0 {
-						fmt.Fprint(writer, "*");
+						fmt.Fprint(writer, "*")
 					}
 					k++
 				}
 
 				for _, f := range columns {
 					if k > 0 {
-						fmt.Fprint(writer, ",");
+						fmt.Fprint(writer, ",")
 					}
 
 					if f.Code == "$id" {
-						fmt.Fprintf(writer, "\"%d\"",  record.Id())
+						fmt.Fprintf(writer, "\"%d\"", record.Id())
 					} else if f.Code == "$revision" {
-						fmt.Fprintf(writer, "\"%d\"",  record.Revision())
+						fmt.Fprintf(writer, "\"%d\"", record.Revision())
 					} else if f.IsSubField {
 						table := record.Fields[f.Table].(kintone.SubTableField)
 						if j < len(table) {
 							subField := table[j].Fields[f.Code]
 							if f.Type == kintone.FT_FILE {
-								dir := fmt.Sprintf("%s-%d-%d", f.Code, rowId, j)
+								dir := fmt.Sprintf("%s-%d-%d", f.Code, rowID, j)
 								err := downloadFile(app, subField, dir)
 								if err != nil {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\"" + escapeCol(toString(subField, "\n")) + "\"")
+							fmt.Fprint(writer, "\""+escapeCol(toString(subField, "\n"))+"\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
 						if field != nil {
 							if j == 0 && f.Type == kintone.FT_FILE {
-								dir := fmt.Sprintf("%s-%d", f.Code, rowId)
+								dir := fmt.Sprintf("%s-%d", f.Code, rowID)
 								err := downloadFile(app, field, dir)
 								if err != nil {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\"" + escapeCol(toString(field, "\n")) + "\"")
+							fmt.Fprint(writer, "\""+escapeCol(toString(field, "\n"))+"\"")
 						}
 					}
 					k++
 				}
-				fmt.Fprint(writer, "\r\n");
+				fmt.Fprint(writer, "\r\n")
 			}
 			i++
 		}
@@ -258,7 +257,7 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 }
 
 func downloadFile(app *kintone.App, field interface{}, dir string) error {
-	if config.fileDir == "" {
+	if config.FileDir == "" {
 		return nil
 	}
 
@@ -271,10 +270,10 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 		return nil
 	}
 
-	fileDir := fmt.Sprintf("%s%c%s", config.fileDir, os.PathSeparator, dir)
+	fileDir := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, dir)
 	if err := os.MkdirAll(fileDir, 0777); err != nil {
-    return err
-  }
+		return err
+	}
 
 	for idx, file := range v {
 		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, file.Name)
@@ -284,28 +283,28 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 		}
 
 		fo, err := os.Create(path)
-    if err != nil {
-      return err
-    }
-    defer fo.Close()
+		if err != nil {
+			return err
+		}
+		defer fo.Close()
 
-    // make a buffer to keep chunks that are read
-    buf := make([]byte, 256 * 1024)
-    for {
-      // read a chunk
-      n, err := data.Reader.Read(buf)
-      if err != nil && err != io.EOF {
-        return err
-      }
-      if n == 0 {
-        break
-      }
+		// make a buffer to keep chunks that are read
+		buf := make([]byte, 256*1024)
+		for {
+			// read a chunk
+			n, err := data.Reader.Read(buf)
+			if err != nil && err != io.EOF {
+				return err
+			}
+			if n == 0 {
+				break
+			}
 
-      // write a chunk
-      if _, err := fo.Write(buf[:n]); err != nil {
-        return err
-      }
-    }
+			// write a chunk
+			if _, err := fo.Write(buf[:n]); err != nil {
+				return err
+			}
+		}
 
 		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, file.Name)
 	}
@@ -431,23 +430,22 @@ func toString(f interface{}, delimiter string) string {
 		dateField := f.(kintone.DateField)
 		if dateField.Valid {
 			return dateField.Date.Format("2006-01-02")
-		} else {
-			return ""
 		}
+		return ""
+
 	case kintone.TimeField:
 		timeField := f.(kintone.TimeField)
 		if timeField.Valid {
 			return timeField.Time.Format("15:04:05")
-		} else {
-			return ""
 		}
+		return ""
 	case kintone.DateTimeField:
 		dateTimeField := f.(kintone.DateTimeField)
 		if dateTimeField.Valid {
 			return dateTimeField.Time.Format(time.RFC3339)
-		} else {
-			return ""
 		}
+		return ""
+
 	case kintone.UserField:
 		userField := f.(kintone.UserField)
 		users := make([]string, 0, len(userField))

@@ -15,7 +15,7 @@ import (
 )
 
 const NAME = "cli-kintone"
-const VERSION = "0.9.0"
+const VERSION = "0.9.1"
 
 // Configure cli configuration
 type Configure struct {
@@ -150,7 +150,7 @@ func main() {
 	flag.StringVar(&config.password, "p", "", "Password")
 	flag.StringVar(&config.basicAuthUser, "U", "", "Basic authentication user name")
 	flag.StringVar(&config.basicAuthPassword, "P", "", "Basic authentication password")
-	flag.StringVar(&config.domain, "d", "", "Domain name")
+	flag.StringVar(&config.domain, "d", "", "Domain name (specify the FQDN)")
 	flag.StringVar(&config.apiToken, "t", "", "API token")
 	flag.Uint64Var(&config.appId, "a", 0, "App ID")
 	flag.Uint64Var(&config.guestSpaceId, "g", 0, "Guest Space ID")

@@ -44,7 +44,6 @@ https://github.com/kintone/cli-kintone/releases
 ## Usage
     Usage:
         cli-kintone.darwin.amd64 [OPTIONS]
-
     Application Options:
         -d=           Domain name
         -u=           Login name

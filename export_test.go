@@ -1,13 +1,13 @@
-
 package main
 
 import (
 	"bytes"
-	"io"
-  "fmt"
-	"testing"
 	"encoding/csv"
-  "github.com/kintone/go-kintone"
+	"fmt"
+	"io"
+	"testing"
+
+	"github.com/kintone/go-kintone"
 )
 
 func makeTestData(app *kintone.App) error {
@@ -46,20 +46,20 @@ func makeTestData(app *kintone.App) error {
 }
 
 func TestExport1(t *testing.T) {
-  buf := &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 
 	app := newApp()
 	makeTestData(app)
 
-	config.fields = []string{"single_line_text", "multi_line_text", "number"}
-	config.query = "order by record_number asc"
-  err := writeCsv(app, buf)
+	config.Fields = []string{"single_line_text", "multi_line_text", "number"}
+	config.Query = "order by record_number asc"
+	err := writeCsv(app, buf)
 	if err != nil {
 		t.Error(err)
 	}
 
 	//output := buf.String()
-  //fmt.Printf(output)
+	//fmt.Printf(output)
 	fmt.Printf("\n")
 
 	reader := csv.NewReader(buf)
@@ -114,20 +114,20 @@ func TestExport1(t *testing.T) {
 }
 
 func TestExport2(t *testing.T) {
-  buf := &bytes.Buffer{}
+	buf := &bytes.Buffer{}
 
 	app := newApp()
 	makeTestData(app)
 
-	config.fields = []string{"single_line_text", "multi_line_text", "number", "table"}
-	config.query = "order by record_number asc"
-  err := writeCsv(app, buf)
+	config.Fields = []string{"single_line_text", "multi_line_text", "number", "table"}
+	config.Query = "order by record_number asc"
+	err := writeCsv(app, buf)
 	if err != nil {
 		t.Error(err)
 	}
 
 	//output := buf.String()
-  //fmt.Printf(output)
+	//fmt.Printf(output)
 
 	reader := csv.NewReader(buf)
 

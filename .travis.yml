@@ -14,9 +14,9 @@ script:
   - zip linux-x64.zip build/linux-x64/cli-kintone
   - gox -osarch="darwin/amd64" -output build/macos-x64/cli-kintone
   - zip macos-x64.zip build/macos-x64/cli-kintone
-  - gox -osarch="windows/amd64" -output build/windows-x64/cli-kintone
+  - gox -osarch="windows/amd64" -tags "forceposix" -output build/windows-x64/cli-kintone
   - zip windows-x64.zip build/windows-x64/cli-kintone.exe
-  - gox -osarch="windows/386" -output build/windows/cli-kintone
+  - gox -osarch="windows/386" -tags "forceposix" -output build/windows/cli-kintone
   - zip windows.zip build/windows/cli-kintone.exe
 deploy:
   provider: releases

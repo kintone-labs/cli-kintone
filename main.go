@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -12,42 +11,47 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
+
+	flags "github.com/jessevdk/go-flags"
 )
 
+// NAME of this package
 const NAME = "cli-kintone"
+
+// VERSION of this package
 const VERSION = "0.9.1"
 
-// Configure cli configuration
+// IMPORT_ROW_LIMIT The maximum row will be import
+const IMPORT_ROW_LIMIT = 100
+
+// EXPORT_ROW_LIMIT The maximum row will be export
+const EXPORT_ROW_LIMIT = 500
+
+// Configure of this package
 type Configure struct {
-	login             string
-	password          string
-	basicAuthUser     string
-	basicAuthPassword string
-	apiToken          string
-	domain            string
-	basic             string
-	format            string
-	query             string
-	appId             uint64
-	fields            []string
-	filePath          string
-	deleteAll         bool
-	encoding          string
-	guestSpaceId      uint64
-	fileDir           string
-	line              uint64
-	isImport          bool
-	isExport          bool
+	Domain            string   `short:"d" long:"domain" default:"" description:"Domain name"`
+	Login             string   `short:"u" long:"username" default:"" description:"Login name"`
+	Password          string   `short:"p" long:"password"  default:"" description:"Password"`
+	BasicAuthUser     string   `short:"U" long:"basic-username" default:"" description:"Basic authentication user name"`
+	BasicAuthPassword string   `short:"P" long:"basic-password" default:"" description:"Basic authentication password"`
+	APIToken          string   `short:"t" long:"api-token" default:"" description:"API token"`
+	Format            string   `short:"o" long:"output-format" default:"csv" description:"Output format: 'json' or 'csv'"`
+	Query             string   `short:"q" long:"query" default:"" description:"Query string"`
+	AppID             uint64   `short:"a" long:"app-id" default:"0" description:"App ID"`
+	Fields            []string `short:"c" long:"columns" description:"Field names (comma separated)"`
+	FilePath          string   `short:"f" default:"" long:"input-file" description:"Input file path"`
+	DeleteAll         bool     `short:"D" long:"delete-all" description:"Delete all records before inserting"`
+	Encoding          string   `short:"e" long:"encoding" default:"utf-8" description:"Character encoding: 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'"`
+	GuestSpaceID      uint64   `short:"g" long:"guest-space-id" default:"0" description:"Guest Space ID"`
+	FileDir           string   `short:"b" default:"" long:"attachment-dir" description:"Attachment file directory"`
+	Line              uint64   `short:"l" long:"line" default:"1" description:"The position index of data in the input file"`
+	IsImport          bool     `long:"import" description:"Force import"`
+	IsExport          bool     `long:"export" description:"Force export"`
 }
 
 var config Configure
 
-// IMPORT_ROW_LIMIT Limit of kintone app (POST/PUT)
-const IMPORT_ROW_LIMIT = 100
-
-// IMPORT_ROW_LIMIT Limit of kintone app (GET)
-const EXPORT_ROW_LIMIT = 500
-
+// Column config
 type Column struct {
 	Code       string
 	Type       string
@@ -55,6 +59,7 @@ type Column struct {
 	Table      string
 }
 
+// Columns config
 type Columns []*Column
 
 func (p Columns) Len() int {
@@ -127,7 +132,7 @@ func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 }
 
 func getEncoding() encoding.Encoding {
-	switch config.encoding {
+	switch config.Encoding {
 	case "utf-16":
 		return unicode.UTF16(unicode.LittleEndian, unicode.IgnoreBOM)
 	case "utf-16be-with-signature":
@@ -144,88 +149,77 @@ func getEncoding() encoding.Encoding {
 }
 
 func main() {
-	var colNames string
+	var err error
 
-	flag.StringVar(&config.login, "u", "", "Login name")
-	flag.StringVar(&config.password, "p", "", "Password")
-	flag.StringVar(&config.basicAuthUser, "U", "", "Basic authentication user name")
-	flag.StringVar(&config.basicAuthPassword, "P", "", "Basic authentication password")
-	flag.StringVar(&config.domain, "d", "", "Domain name (specify the FQDN)")
-	flag.StringVar(&config.apiToken, "t", "", "API token")
-	flag.Uint64Var(&config.appId, "a", 0, "App ID")
-	flag.Uint64Var(&config.guestSpaceId, "g", 0, "Guest Space ID")
-	flag.StringVar(&config.format, "o", "csv", "Output format: 'json' or 'csv'(default)")
-	flag.StringVar(&config.query, "q", "", "Query string")
-	flag.StringVar(&colNames, "c", "", "Field names (comma separated)")
-	flag.StringVar(&config.filePath, "f", "", "Input file path")
-	flag.BoolVar(&config.deleteAll, "D", false, "Delete all records before insert")
-	flag.StringVar(&config.encoding, "e", "utf-8", "Character encoding: 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'")
-	flag.StringVar(&config.fileDir, "b", "", "Attachment file directory")
-
-	flag.Uint64Var(&config.line, "l", 1, "The position index of data in the input file")
-	flag.BoolVar(&config.isImport, "import", false, "Force import")
-	flag.BoolVar(&config.isExport, "export", false, "Force export")
-
-	flag.Parse()
-	if config.appId == 0 || (config.apiToken == "" && (config.domain == "" || config.login == "")) {
-		flag.PrintDefaults()
-		return
+	_, err = flags.ParseArgs(&config, os.Args[1:])
+	if err != nil {
+		os.Exit(1)
+	}
+	if config.AppID == 0 || (config.APIToken == "" && (config.Domain == "" || config.Login == "")) {
+		helpArg := []string{"-h"}
+		flags.ParseArgs(&config, helpArg)
+		os.Exit(1)
 	}
 
-	if !strings.Contains(config.domain, ".") {
-		config.domain += ".cybozu.com"
+	if !strings.Contains(config.Domain, ".") {
+		config.Domain += ".cybozu.com"
 	}
 
-	if colNames != "" {
-		config.fields = strings.Split(colNames, ",")
-		for i, field := range config.fields {
-			config.fields[i] = strings.TrimSpace(field)
+	// Support set columm with comma separated (",") in arg
+	var cols []string
+	if len(config.Fields) > 0 {
+		for _, field := range config.Fields {
+			curField := strings.Split(field, ",")
+			cols = append(cols, curField...)
+		}
+		config.Fields = nil
+		for _, col := range cols {
+			curFieldString := strings.TrimSpace(col)
+			if curFieldString != "" {
+				config.Fields = append(config.Fields, curFieldString)
+			}
 		}
 	}
 
 	var app *kintone.App
-
-	if config.basicAuthUser != "" && config.basicAuthPassword == "" {
+	if config.BasicAuthUser != "" && config.BasicAuthPassword == "" {
 		fmt.Printf("Basic authentication password: ")
 		pass, _ := gopass.GetPasswd()
-		config.basicAuthPassword = string(pass)
+		config.BasicAuthPassword = string(pass)
 	}
 
-	if config.apiToken == "" {
-		if config.password == "" {
+	if config.APIToken == "" {
+		if config.Password == "" {
 			fmt.Printf("Password: ")
 			pass, _ := gopass.GetPasswd()
-			config.password = string(pass)
+			config.Password = string(pass)
 		}
 
 		app = &kintone.App{
-			Domain:       config.domain,
-			User:         config.login,
-			Password:     config.password,
-			AppId:        config.appId,
-			GuestSpaceId: config.guestSpaceId,
+			Domain:       config.Domain,
+			User:         config.Login,
+			Password:     config.Password,
+			AppId:        config.AppID,
+			GuestSpaceId: config.GuestSpaceID,
 		}
 	} else {
 		app = &kintone.App{
-			Domain:       config.domain,
-			ApiToken:     config.apiToken,
-			AppId:        config.appId,
-			GuestSpaceId: config.guestSpaceId,
+			Domain:       config.Domain,
+			ApiToken:     config.APIToken,
+			AppId:        config.AppID,
+			GuestSpaceId: config.GuestSpaceID,
 		}
 	}
 
-	if config.basicAuthUser != "" {
-		app.SetBasicAuth(config.basicAuthUser, config.basicAuthPassword)
+	if config.BasicAuthUser != "" {
+		app.SetBasicAuth(config.BasicAuthUser, config.BasicAuthPassword)
 	}
 
-	app.SetUserAgentHeader(NAME + "/" + VERSION)
-
-	var err error
 	// Old logic without force import/export
-	if config.isImport == false && config.isExport == false {
-		if config.filePath == "" {
-			if config.format == "json" {
-				err = writeJson(app, os.Stdout)
+	if config.IsImport == false && config.IsExport == false {
+		if config.FilePath == "" {
+			if config.Format == "json" {
+				err = writeJSON(app, os.Stdout)
 			} else {
 				err = writeCsv(app, os.Stdout)
 			}
@@ -233,13 +227,12 @@ func main() {
 			err = importDataFromFile(app)
 		}
 	}
-	// Filter flag: the first flag have priority
-	if config.isImport && config.isExport {
+	if config.IsImport && config.IsExport {
 		log.Fatal("The options --import and --export cannot be specified together!")
 	}
 
-	if config.isImport {
-		if config.filePath == "" {
+	if config.IsImport {
+		if config.FilePath == "" {
 			err = importFromCSV(app, os.Stdin)
 		} else {
 
@@ -247,17 +240,16 @@ func main() {
 		}
 	}
 
-	if config.isExport {
-		if config.filePath != "" {
+	if config.IsExport {
+		if config.FilePath != "" {
 			log.Fatal("The -f option is not supported with the --export option.")
 		}
-		if config.format == "json" {
-			err = writeJson(app, os.Stdout)
+		if config.Format == "json" {
+			err = writeJSON(app, os.Stdout)
 		} else {
 			err = writeCsv(app, os.Stdout)
 		}
 	}
-
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -266,7 +258,7 @@ func main() {
 func importDataFromFile(app *kintone.App) error {
 	var file *os.File
 	var err error
-	file, err = os.Open(config.filePath)
+	file, err = os.Open(config.FilePath)
 	if err == nil {
 		defer file.Close()
 		err = importFromCSV(app, file)

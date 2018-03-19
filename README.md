@@ -5,7 +5,7 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 ## Version
 
-0.9.0
+0.9.1
 
 ## How to Build
 
@@ -24,6 +24,7 @@ Install dependencies
     $ go get github.com/kintone/go-kintone
     $ go get github.com/howeyc/gopass
     $ go get golang.org/x/text/encoding
+    $ go get github.com/jessevdk/go-flags
 
 build
 
@@ -41,26 +42,31 @@ These binaries are available for download.
 https://github.com/kintone/cli-kintone/releases
 
 ## Usage
+    Usage:
+        cli-kintone.darwin.amd64 [OPTIONS]
+    Application Options:
+        -d, --domain=         Domain name
+        -u, --username=       Login name
+        -p, --password=       Password
+        -U, --basic-username= Basic authentication user name
+        -P, --basic-password= Basic authentication password
+        -t, --api-token=      API token
+        -o, --output-format=  Output format: 'json' or 'csv' (default: csv)
+        -q, --query=          Query string
+        -a, --app-id=         App ID (default: 0)
+        -c, --columns=        Field names (comma separated)
+        -f, --input-file=     Input file path
+        -D, --delete-all      Delete all records before inserting
+        -e, --encoding=       Character encoding: 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp' (default: utf-8)
+        -g, --guest-space-id= Guest Space ID (default: 0)
+        -b, --attachment-dir= Attachment file directory
+        -l, --line=           The position index of data in the input file (default: 1)
+            --import          Force import
+            --export          Force export
 
-    -d = "" : Domain name. Specify the FQDN.
-    -a = 0 : App ID.
-    -u = "" : User's log in name.
-    -p = "" : User's password.
-    -t = "" : API token.     
-    -g = 0 : Guest Space ID.
-    -o = "csv" : Output format. Specify either 'json' or 'csv'(default).  
-    -e = "utf-8" : Character encoding. Specify one of the following -> 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'.
-    -U = "" : Basic authentication user name.
-    -P = "" : Basic authentication password.         
-    -q = "" : Query string. 
-    -c = "" : Fields to export (comma separated). Specify the field code name.
-    -f = "" : Input file path.
-    -b = "" : Attachment file directory.
-    -D = false : Delete records before insert. You can specify the deleting record condition by option "-q".
-    -l = 1 : Position index of data in the input file. Default is 1.
-    --import : Import data from stdin. If "-f" is also specified, data is imported from the file instead.
-    --export : Export kintone data to stdout.
-    
+    Help Options:
+        -h, --help            Show this help message
+
 ## Examples
 
 ### Export all columns from an app

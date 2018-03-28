@@ -6,8 +6,9 @@ before_install:
   - go get github.com/kintone/go-kintone
   - go get github.com/howeyc/gopass
   - go get golang.org/x/text/encoding
-  - go get github.com/mitchellh/gox
   - go get github.com/jessevdk/go-flags
+  - go get github.com/mitchellh/gox # get gox lib for building cross platform 
+
 script:
   - go vet -x ./...
   - gox -osarch="linux/amd64" -output build/linux-x64/cli-kintone

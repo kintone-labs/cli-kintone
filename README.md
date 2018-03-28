@@ -42,30 +42,34 @@ These binaries are available for download.
 https://github.com/kintone/cli-kintone/releases
 
 ## Usage
+```bash
     Usage:
         cli-kintone.darwin.amd64 [OPTIONS]
+
     Application Options:
-        -d=           Domain name
-        -u=           Login name
-        -p=           Password
+        -d=           Domain name (specify the FQDN)
+        -a=           App ID (default: 0)
+        -u=           User's log in name
+        -p=           User's password
+        -t=           API token
+        -g=           Guest Space ID (default: 0)
+        -o=           Output format. Specify either 'json' or 'csv' (default: csv)
+        -e=           Character encoding. Specify one of the following -> 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or
+                        'euc-jp' (default: utf-8)
         -U=           Basic authentication user name
         -P=           Basic authentication password
-        -t=           API token
-        -o=           Output format: 'json' or 'csv' (default: csv)
         -q=           Query string
-        -a=           App ID (default: 0)
-        -c=           Field names (comma separated)
+        -c=           Fields to export (comma separated). Specify the field code name
         -f=           Input file path
-        -D            Delete all records before inserting
-        -e=           Character encoding: 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp' (default: utf-8)
-        -g=           Guest Space ID (default: 0)
         -b=           Attachment file directory
-        -l=           The position index of data in the input file (default: 1)
-            --import  Force import
-            --export  Force export
+        -D            Delete records before insert. You can specify the deleting record condition by option "-q"
+        -l=           Position index of data in the input file (default: 1)
+            --import  Import data from stdin. If "-f" is also specified, data is imported from the file instead
+            --export  Export kintone data to stdout
 
     Help Options:
         -h, --help    Show this help message
+```
 ## Examples
 
 ### Export all columns from an app

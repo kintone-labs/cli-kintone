@@ -29,24 +29,24 @@ const EXPORT_ROW_LIMIT = 500
 
 // Configure of this package
 type Configure struct {
-	Domain            string   `short:"d" default:"" description:"Domain name"`
-	Login             string   `short:"u" default:"" description:"Login name"`
-	Password          string   `short:"p" default:"" description:"Password"`
+	Domain            string   `short:"d" default:"" description:"Domain name (specify the FQDN)"`
+	AppID             uint64   `short:"a" default:"0" description:"App ID"`
+	Login             string   `short:"u" default:"" description:"User's log in name"`
+	Password          string   `short:"p" default:"" description:"User's password"`
+	APIToken          string   `short:"t" default:"" description:"API token"`
+	GuestSpaceID      uint64   `short:"g" default:"0" description:"Guest Space ID"`
+	Format            string   `short:"o" default:"csv" description:"Output format. Specify either 'json' or 'csv'"`
+	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding. Specify one of the following -> 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'"`
 	BasicAuthUser     string   `short:"U" default:"" description:"Basic authentication user name"`
 	BasicAuthPassword string   `short:"P" default:"" description:"Basic authentication password"`
-	APIToken          string   `short:"t" default:"" description:"API token"`
-	Format            string   `short:"o" default:"csv" description:"Output format: 'json' or 'csv'"`
 	Query             string   `short:"q" default:"" description:"Query string"`
-	AppID             uint64   `short:"a" default:"0" description:"App ID"`
-	Fields            []string `short:"c" description:"Field names (comma separated)"`
+	Fields            []string `short:"c" description:"Fields to export (comma separated). Specify the field code name"`
 	FilePath          string   `short:"f" default:"" description:"Input file path"`
-	DeleteAll         bool     `short:"D" description:"Delete all records before inserting"`
-	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding: 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'"`
-	GuestSpaceID      uint64   `short:"g" default:"0" description:"Guest Space ID"`
 	FileDir           string   `short:"b" default:"" description:"Attachment file directory"`
-	Line              uint64   `short:"l" default:"1" description:"The position index of data in the input file"`
-	IsImport          bool     `long:"import" description:"Force import"`
-	IsExport          bool     `long:"export" description:"Force export"`
+	DeleteAll         bool     `short:"D" description:"Delete records before insert. You can specify the deleting record condition by option \"-q\""`
+	Line              uint64   `short:"l" default:"1" description:"Position index of data in the input file"`
+	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
+	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
 }
 
 var config Configure
@@ -153,9 +153,13 @@ func main() {
 
 	_, err = flags.ParseArgs(&config, os.Args[1:])
 	if err != nil {
+		if os.Args[1] != "-h" && os.Args[1] != "--help" {
+			fileExecute := os.Args[0]
+			fmt.Printf("\nTry '%s --help' for more information.\n", fileExecute)
+		}
 		os.Exit(1)
 	}
-	if config.AppID == 0 || (config.APIToken == "" && (config.Domain == "" || config.Login == "")) {
+	if len(os.Args) == 0 || config.AppID == 0 || (config.APIToken == "" && (config.Domain == "" || config.Login == "")) {
 		helpArg := []string{"-h"}
 		flags.ParseArgs(&config, helpArg)
 		os.Exit(1)

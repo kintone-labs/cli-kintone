@@ -44,7 +44,7 @@ https://github.com/kintone/cli-kintone/releases
 ## Usage
 ```bash
     Usage:
-        cli-kintone.darwin.amd64 [OPTIONS]
+        cli-kintone [OPTIONS]
 
     Application Options:
         -d=           Domain name (specify the FQDN)

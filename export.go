@@ -287,9 +287,9 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 	if err := os.MkdirAll(fileDir, 0777); err != nil {
 		return err
 	}
-
+	pathPrefix := "%s%c%0" + (fmt.Sprint(len(fmt.Sprintf("%v", len(v))))) + "d_%s"
 	for idx, file := range v {
-		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, file.Name)
+		path := fmt.Sprintf(pathPrefix, fileDir, os.PathSeparator, idx, file.Name)
 		data, err := app.Download(file.FileKey)
 		if err != nil {
 			return err
@@ -319,7 +319,7 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 			}
 		}
 
-		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, file.Name)
+		v[idx].Name = fmt.Sprintf(pathPrefix, dir, os.PathSeparator, idx, file.Name)
 	}
 
 	return nil

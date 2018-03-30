@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -55,6 +56,32 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 		for _, record := range records {
 			if i > 0 {
 				fmt.Fprint(writer, ",\n")
+			}
+			// Download file to local folder that is the value of param -b
+			for fieldCode, fieldInfo := range record.Fields {
+				fieldType := reflect.TypeOf(fieldInfo).String()
+				if fieldType == "kintone.FileField" {
+					dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
+					err := downloadFile(app, fieldInfo, dir)
+					if err != nil {
+						return err
+
+					}
+				} else if fieldType == "kintone.SubTableField" {
+					subTable := fieldInfo.(kintone.SubTableField)
+					for subTableIndex, subTableValue := range subTable {
+						for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
+							if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
+								dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
+								err := downloadFile(app, fieldValueInSubTable, dir)
+								if err != nil {
+									return err
+
+								}
+							}
+						}
+					}
+				}
 			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)

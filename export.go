@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"reflect"
 	"regexp"
 	"strings"
@@ -314,9 +315,9 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 	if err := os.MkdirAll(fileDir, 0777); err != nil {
 		return err
 	}
-	pathPrefix := "%s%c%0" + (fmt.Sprint(len(fmt.Sprintf("%v", len(v))))) + "d_%s"
 	for idx, file := range v {
-		path := fmt.Sprintf(pathPrefix, fileDir, os.PathSeparator, idx, file.Name)
+		fileName := getUniqueFileName(file.Name, fileDir)
+		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, fileName)
 		data, err := app.Download(file.FileKey)
 		if err != nil {
 			return err
@@ -346,12 +347,35 @@ func downloadFile(app *kintone.App, field interface{}, dir string) error {
 			}
 		}
 
-		v[idx].Name = fmt.Sprintf(pathPrefix, dir, os.PathSeparator, idx, file.Name)
+		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, fileName)
 	}
 
 	return nil
 }
 
+func getUniqueFileName(filename, dir string) string {
+	filenameOuput := filename
+	fileExt := filepath.Ext(filename)
+	fileBaseName := filename[0 : len(filename)-len(fileExt)]
+	index := 0
+	parentDir := fmt.Sprintf("%s%c", dir, os.PathSeparator)
+	if dir == "" {
+		parentDir = ""
+	}
+	for {
+		fileFullPath := fmt.Sprintf("%s%s", parentDir, filenameOuput)
+		if !isExistFile(fileFullPath) {
+			break
+		}
+		index++
+		filenameOuput = fmt.Sprintf("%s (%d)%s", fileBaseName, index, fileExt)
+	}
+	return filenameOuput
+}
+func isExistFile(fileFullPath string) bool {
+	_, fileNotExist := os.Stat(fileFullPath)
+	return !os.IsNotExist(fileNotExist)
+}
 func escapeCol(s string) string {
 	return strings.Replace(s, "\"", "\"\"", -1)
 }

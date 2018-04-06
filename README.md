@@ -42,7 +42,7 @@ These binaries are available for download.
 https://github.com/kintone/cli-kintone/releases
 
 ## Usage
-```bash
+```
     Usage:
         cli-kintone [OPTIONS]
 

@@ -178,7 +178,7 @@ func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone
 	}
 	recordsUpdate = append(recordsUpdate, recordPUT)
 	dataPUT = &DataRequestRecordsPUT{App: app.AppId, Records: recordsUpdate}
-	requestPUTRecords := &BulkRequestItem{"PUT", "/k/v1/records.json", dataPUT}
+	requestPUTRecords := &BulkRequestItem{"PUT", kintoneURLPath("records", app.GuestSpaceId), dataPUT}
 	bulk.Requests = append(bulk.Requests, requestPUTRecords)
 
 	return nil
@@ -211,21 +211,26 @@ func (bulk *BulkRequests) ImportDataInsert(app *kintone.App, recordData *kintone
 	recordsInsert := make([]*kintone.Record, 0)
 	recordsInsert = append(recordsInsert, recordData)
 	dataPOST = &DataRequestRecordsPOST{app.AppId, recordsInsert}
-	requestPostRecords := &BulkRequestItem{"POST", "/k/v1/records.json", dataPOST}
+	requestPostRecords := &BulkRequestItem{"POST", kintoneURLPath("records", app.GuestSpaceId), dataPOST}
 	bulk.Requests = append(bulk.Requests, requestPostRecords)
 
 	return nil
 
 }
 
-func newRequest(app *kintone.App, method, api string, body io.Reader) (*http.Request, error) {
+// kintoneURLPath get path URL of kintone api
+func kintoneURLPath(apiName string, GuestSpaceID uint64) string {
 	var path string
-	if app.GuestSpaceId == 0 {
-		path = fmt.Sprintf("/k/v1/%s.json", api)
+	if GuestSpaceID == 0 {
+		path = fmt.Sprintf("/k/v1/%s.json", apiName)
 	} else {
-		path = fmt.Sprintf("/k/guest/%d/v1/%s.json", app.GuestSpaceId, api)
+		path = fmt.Sprintf("/k/guest/%d/v1/%s.json", GuestSpaceID, apiName)
 	}
+	return path
+}
 
+func newRequest(app *kintone.App, method, api string, body io.Reader) (*http.Request, error) {
+	path := kintoneURLPath(api, app.GuestSpaceId)
 	u := url.URL{
 		Scheme: "https",
 		Host:   app.Domain,

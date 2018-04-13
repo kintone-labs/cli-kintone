@@ -1,0 +1,13 @@
+  gom 'golang.org/x/crypto'
+  gom 'golang.org/x/text'
+
+group :production do
+  gom 'github.com/kintone/go-kintone', :tag => 'v0.1.1'
+  gom 'github.com/howeyc/gopass', :commit => 'bf9dde6d0d2c004a008c27aaee91170c786f6db8'
+  gom 'github.com/jessevdk/go-flags', :tag => 'v1.4.0'
+end
+group :development do
+  gom 'github.com/kintone/go-kintone'
+  gom 'github.com/howeyc/gopass'
+  gom 'github.com/jessevdk/go-flags'
+end

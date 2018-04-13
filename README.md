@@ -16,20 +16,21 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 Getting the source code
 
+    $ export GOPATH=/path/to/your/Go/project/folder
     $ cd ${GOPATH}/src
     $ git clone https://github.com/kintone/cli-kintone.git
 
 Install dependencies
 
-    $ go get github.com/kintone/go-kintone
-    $ go get github.com/howeyc/gopass
-    $ go get golang.org/x/text/encoding
-    $ go get github.com/jessevdk/go-flags
+    $ export GOPATH=/path/to/your/Go/project/folder
+    $ go get github.com/mattn/gom
+    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom
+    $ gom -production install
 
 build
 
     $ cd ${GOPATH}/src/cli-kintone
-    $ go build
+    $ gom build
 
 ## Downloads
 
@@ -42,7 +43,7 @@ These binaries are available for download.
 https://github.com/kintone/cli-kintone/releases
 
 ## Usage
-```
+```text
     Usage:
         cli-kintone [OPTIONS]
 

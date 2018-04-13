@@ -1,6 +1,5 @@
 language: go
 go:
-  - tip
   - 1.9.3
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
@@ -11,7 +10,6 @@ script:
   - go vet -x ./...
   # Install dependencies via gom
   - $HOME/gopath/bin/gom -production install
-  - $HOME/gopath/bin/gom test
 
   # Build linux/amd64 archive
   - export GOOS="linux"
@@ -29,13 +27,13 @@ script:
   - export GOOS="windows"
   - export GOARCH="amd64"
   - gom build -v -tags "forceposix" -o build/windows-x64/cli-kintone
-  - zip windows-x64.zip build/windows-x64/cli-kintone.exe
+  - zip windows-x64.zip build/windows-x64
 
   # Build windows/386 archive
   - export GOOS="windows"
   - export GOARCH="386"
   - gom build -v -tags "forceposix" -o build/windows/cli-kintone
-  - zip windows.zip build/windows/cli-kintone.exe
+  - zip windows.zip build/windows
 
 deploy:
   provider: releases

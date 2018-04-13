@@ -26,14 +26,14 @@ script:
   # Build windows/amd64 archive
   - export GOOS="windows"
   - export GOARCH="amd64"
-  - gom build -v -tags "forceposix" -o build/windows-x64/cli-kintone
-  - zip windows-x64.zip build/windows-x64
+  - gom build -v -tags "forceposix" -o build/windows-x64/cli-kintone.exe
+  - zip windows-x64.zip build/windows-x64/cli-kintone.exe
 
   # Build windows/386 archive
   - export GOOS="windows"
   - export GOARCH="386"
-  - gom build -v -tags "forceposix" -o build/windows/cli-kintone
-  - zip windows.zip build/windows
+  - gom build -v -tags "forceposix" -o build/windows/cli-kintone.exe
+  - zip windows.zip build/windows/cli-kintone.exe
 
 deploy:
   provider: releases

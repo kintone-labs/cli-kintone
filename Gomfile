@@ -1,6 +1,6 @@
 group :production do
-  gom 'golang.org/x/crypto', :commit => 'bf9dde6d0d2c004a008c27aaee91170c786f6db8'
-  gom 'golang.org/x/text', :commit => '613d6eafa307c6881a737a3c35c0e312e8d3a8c5'
+  gom 'golang.org/x/crypto', :commit => '613d6eafa307c6881a737a3c35c0e312e8d3a8c5'
+  gom 'golang.org/x/text', :commit => '7922cc490dd5a7dbaa7fd5d6196b49db59ac042f'
   gom 'github.com/kintone/go-kintone', :tag => 'v0.1.1'
   gom 'github.com/howeyc/gopass', :commit => 'bf9dde6d0d2c004a008c27aaee91170c786f6db8'
   gom 'github.com/jessevdk/go-flags', :tag => 'v1.4.0'

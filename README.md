@@ -119,7 +119,10 @@ English: https://developer.kintone.io/hc/en-us/articles/115002614853
 Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 ## Restriction
-* The limit of file upload size is 10 MB.
+* The limit of the file upload size is 10 MB.
+* Client certificates cannot be used with cli-kintone.
+* The following record data cannot be retrieved: Category, Status, Field group.
+* The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
 
 ## License
 

@@ -268,7 +268,8 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(subField, "\n"))+"\"")
+							subFieldEncoding, _ := transformStringFromEncoding(toString(subField, "\n"))
+							fmt.Fprint(writer, "\""+escapeCol(subFieldEncoding)+"\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
@@ -280,7 +281,8 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(field, "\n"))+"\"")
+							fieldEncoding, _ := transformStringFromEncoding(toString(field, "\n"))
+							fmt.Fprint(writer, "\""+escapeCol(fieldEncoding)+"\"")
 						}
 					}
 					k++

@@ -83,9 +83,9 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 							subTableValue.Fields[fieldCodeInSubTable] = transformEncodingJSONValue(fieldValueInSubTable)
 						}
 					}
-				} else {
-					record.Fields[fieldCode] = transformEncodingJSONValue(fieldInfo)
 				}
+				record.Fields[fieldCode] = transformEncodingJSONValue(fieldInfo)
+
 			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)

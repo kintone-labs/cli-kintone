@@ -80,8 +80,11 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 
 								}
 							}
+							subTableValue.Fields[fieldCodeInSubTable] = transformEncodingJSONValue(fieldValueInSubTable)
 						}
 					}
+				} else {
+					record.Fields[fieldCode] = transformEncodingJSONValue(fieldInfo)
 				}
 			}
 			jsonArray, _ := record.MarshalJSON()
@@ -96,6 +99,41 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 	fmt.Fprint(writer, "\n]}")
 
 	return nil
+}
+func transformEncodingJSONValue(fields interface{}) interface{} {
+	var fieldEncodingValues interface{}
+	switch fields.(type) {
+	case kintone.SingleLineTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.SingleLineTextField(fieldStringValues)
+	case kintone.MultiLineTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.MultiLineTextField(fieldStringValues)
+	case kintone.RichTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.RichTextField(fieldStringValues)
+	case kintone.SingleSelectField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		if fieldStringValues == "" {
+			fieldEncodingValues = kintone.SingleSelectField{Valid: false}
+		} else {
+			fieldEncodingValues = kintone.SingleSelectField{fieldStringValues, true}
+		}
+	case kintone.CheckBoxField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldStringValuesArray := strings.Split(fieldStringValues, "\n")
+		fieldEncodingValues = kintone.CheckBoxField(fieldStringValuesArray)
+	case kintone.RadioButtonField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.RadioButtonField(fieldStringValues)
+	case kintone.MultiSelectField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldStringValuesArray := strings.Split(fieldStringValues, "\n")
+		fieldEncodingValues = kintone.MultiSelectField(fieldStringValuesArray)
+	default:
+		fieldEncodingValues = fields
+	}
+	return fieldEncodingValues
 }
 
 func makeColumns(fields map[string]*kintone.FieldInfo) Columns {

@@ -552,6 +552,8 @@ func toString(f interface{}, delimiter string) string {
 		userField := f.(kintone.UserField)
 		users := make([]string, 0, len(userField))
 		for _, user := range userField {
+			user.Code, _ = transformStringFromEncoding(user.Code)
+			user.Name, _ = transformStringFromEncoding(user.Name)
 			users = append(users, user.Code)
 		}
 		return strings.Join(users, delimiter)
@@ -559,6 +561,8 @@ func toString(f interface{}, delimiter string) string {
 		organizationField := f.(kintone.OrganizationField)
 		organizations := make([]string, 0, len(organizationField))
 		for _, organization := range organizationField {
+			organization.Code, _ = transformStringFromEncoding(organization.Code)
+			organization.Name, _ = transformStringFromEncoding(organization.Name)
 			organizations = append(organizations, organization.Code)
 		}
 		return strings.Join(organizations, delimiter)
@@ -566,6 +570,8 @@ func toString(f interface{}, delimiter string) string {
 		groupField := f.(kintone.GroupField)
 		groups := make([]string, 0, len(groupField))
 		for _, group := range groupField {
+			group.Code, _ = transformStringFromEncoding(group.Code)
+			group.Name, _ = transformStringFromEncoding(group.Name)
 			groups = append(groups, group.Code)
 		}
 		return strings.Join(groups, delimiter)

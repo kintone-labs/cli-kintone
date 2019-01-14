@@ -130,6 +130,33 @@ func transformEncodingJSONValue(fields interface{}) interface{} {
 		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
 		fieldStringValuesArray := strings.Split(fieldStringValues, "\n")
 		fieldEncodingValues = kintone.MultiSelectField(fieldStringValuesArray)
+	case kintone.UserField:
+		var userList []kintone.User
+		userField := fields.(kintone.UserField)
+		for _, user := range userField {
+			user.Code, _ = transformStringFromEncoding(user.Code)
+			user.Name, _ = transformStringFromEncoding(user.Name)
+			userList = append(userList, user)
+		}
+		fieldEncodingValues = kintone.UserField(userList)
+	case kintone.OrganizationField:
+		var organizations []kintone.Organization
+		organizationField := fields.(kintone.OrganizationField)
+		for _, organization := range organizationField {
+			organization.Code, _ = transformStringFromEncoding(organization.Code)
+			organization.Name, _ = transformStringFromEncoding(organization.Name)
+			organizations = append(organizations, organization)
+		}
+		fieldEncodingValues = kintone.OrganizationField(organizations)
+	case kintone.GroupField:
+		var groups []kintone.Group
+		groupField := fields.(kintone.GroupField)
+		for _, group := range groupField {
+			group.Code, _ = transformStringFromEncoding(group.Code)
+			group.Name, _ = transformStringFromEncoding(group.Name)
+			groups = append(groups, group)
+			fieldEncodingValues = kintone.GroupField(groupField)
+		}
 	default:
 		fieldEncodingValues = fields
 	}

@@ -22,7 +22,7 @@ Getting the source code
 
 Install dependencies
 
-    $ export GOPATH=/path/to/your/Go/project/folder
+    $ cd ${GOPATH}/src/cli-kintone
     $ go get github.com/mattn/gom
     $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom
     $ gom -production install
@@ -30,6 +30,7 @@ Install dependencies
 build
 
     $ cd ${GOPATH}/src/cli-kintone
+    $ sudo mv vendor/ src
     $ gom build
 
 ## Downloads

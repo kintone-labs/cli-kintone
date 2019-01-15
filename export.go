@@ -155,8 +155,8 @@ func transformEncodingJSONValue(fields interface{}) interface{} {
 			group.Code, _ = transformStringFromEncoding(group.Code)
 			group.Name, _ = transformStringFromEncoding(group.Name)
 			groups = append(groups, group)
-			fieldEncodingValues = kintone.GroupField(groupField)
 		}
+		fieldEncodingValues = kintone.GroupField(groupField)
 	default:
 		fieldEncodingValues = fields
 	}
@@ -334,7 +334,9 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 								}
 							}
 							subFieldEncoding, _ := transformStringFromEncoding(toString(subField, "\n"))
-							fmt.Fprint(writer, "\""+escapeCol(subFieldEncoding)+"\"")
+							fmt.Fprint(writer, "\"")
+							fmt.Fprint(writer, escapeCol(subFieldEncoding))
+							fmt.Fprint(writer, "\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
@@ -347,7 +349,9 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 								}
 							}
 							fieldEncoding, _ := transformStringFromEncoding(toString(field, "\n"))
-							fmt.Fprint(writer, "\""+escapeCol(fieldEncoding)+"\"")
+							fmt.Fprint(writer, "\"")
+							fmt.Fprint(writer, escapeCol(fieldEncoding))
+							fmt.Fprint(writer, "\"")
 						}
 					}
 					k++

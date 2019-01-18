@@ -157,6 +157,16 @@ func transformEncodingJSONValue(fields interface{}) interface{} {
 			groups = append(groups, group)
 		}
 		fieldEncodingValues = kintone.GroupField(groupField)
+	case kintone.CreatorField:
+		creatorField := fields.(kintone.CreatorField)
+		creatorField.Code, _ = transformStringFromEncoding(creatorField.Code)
+		creatorField.Name, _ = transformStringFromEncoding(creatorField.Name)
+		fieldEncodingValues = kintone.CreatorField(creatorField)
+	case kintone.ModifierField:
+		modifierField := fields.(kintone.ModifierField)
+		modifierField.Code, _ = transformStringFromEncoding(modifierField.Code)
+		modifierField.Name, _ = transformStringFromEncoding(modifierField.Name)
+		fieldEncodingValues = kintone.ModifierField(modifierField)
 	default:
 		fieldEncodingValues = fields
 	}

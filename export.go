@@ -80,9 +80,12 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 
 								}
 							}
+							subTableValue.Fields[fieldCodeInSubTable] = transformEncodingJSONValue(fieldValueInSubTable)
 						}
 					}
 				}
+				record.Fields[fieldCode] = transformEncodingJSONValue(fieldInfo)
+
 			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
@@ -96,6 +99,78 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 	fmt.Fprint(writer, "\n]}")
 
 	return nil
+}
+func transformEncodingJSONValue(fields interface{}) interface{} {
+	var fieldEncodingValues interface{}
+	switch fields.(type) {
+	case kintone.SingleLineTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.SingleLineTextField(fieldStringValues)
+	case kintone.MultiLineTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.MultiLineTextField(fieldStringValues)
+	case kintone.RichTextField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.RichTextField(fieldStringValues)
+	case kintone.SingleSelectField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		if fieldStringValues == "" {
+			fieldEncodingValues = kintone.SingleSelectField{Valid: false}
+		} else {
+			fieldEncodingValues = kintone.SingleSelectField{fieldStringValues, true}
+		}
+	case kintone.CheckBoxField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldStringValuesArray := strings.Split(fieldStringValues, "\n")
+		fieldEncodingValues = kintone.CheckBoxField(fieldStringValuesArray)
+	case kintone.RadioButtonField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldEncodingValues = kintone.RadioButtonField(fieldStringValues)
+	case kintone.MultiSelectField:
+		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))
+		fieldStringValuesArray := strings.Split(fieldStringValues, "\n")
+		fieldEncodingValues = kintone.MultiSelectField(fieldStringValuesArray)
+	case kintone.UserField:
+		var userList []kintone.User
+		userField := fields.(kintone.UserField)
+		for _, user := range userField {
+			user.Code, _ = transformStringFromEncoding(user.Code)
+			user.Name, _ = transformStringFromEncoding(user.Name)
+			userList = append(userList, user)
+		}
+		fieldEncodingValues = kintone.UserField(userList)
+	case kintone.OrganizationField:
+		var organizations []kintone.Organization
+		organizationField := fields.(kintone.OrganizationField)
+		for _, organization := range organizationField {
+			organization.Code, _ = transformStringFromEncoding(organization.Code)
+			organization.Name, _ = transformStringFromEncoding(organization.Name)
+			organizations = append(organizations, organization)
+		}
+		fieldEncodingValues = kintone.OrganizationField(organizations)
+	case kintone.GroupField:
+		var groups []kintone.Group
+		groupField := fields.(kintone.GroupField)
+		for _, group := range groupField {
+			group.Code, _ = transformStringFromEncoding(group.Code)
+			group.Name, _ = transformStringFromEncoding(group.Name)
+			groups = append(groups, group)
+		}
+		fieldEncodingValues = kintone.GroupField(groupField)
+	case kintone.CreatorField:
+		creatorField := fields.(kintone.CreatorField)
+		creatorField.Code, _ = transformStringFromEncoding(creatorField.Code)
+		creatorField.Name, _ = transformStringFromEncoding(creatorField.Name)
+		fieldEncodingValues = kintone.CreatorField(creatorField)
+	case kintone.ModifierField:
+		modifierField := fields.(kintone.ModifierField)
+		modifierField.Code, _ = transformStringFromEncoding(modifierField.Code)
+		modifierField.Name, _ = transformStringFromEncoding(modifierField.Name)
+		fieldEncodingValues = kintone.ModifierField(modifierField)
+	default:
+		fieldEncodingValues = fields
+	}
+	return fieldEncodingValues
 }
 
 func makeColumns(fields map[string]*kintone.FieldInfo) Columns {
@@ -268,7 +343,10 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(subField, "\n"))+"\"")
+							subFieldEncoding, _ := transformStringFromEncoding(toString(subField, "\n"))
+							fmt.Fprint(writer, "\"")
+							fmt.Fprint(writer, escapeCol(subFieldEncoding))
+							fmt.Fprint(writer, "\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
@@ -280,7 +358,10 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(field, "\n"))+"\"")
+							fieldEncoding, _ := transformStringFromEncoding(toString(field, "\n"))
+							fmt.Fprint(writer, "\"")
+							fmt.Fprint(writer, escapeCol(fieldEncoding))
+							fmt.Fprint(writer, "\"")
 						}
 					}
 					k++
@@ -512,6 +593,8 @@ func toString(f interface{}, delimiter string) string {
 		userField := f.(kintone.UserField)
 		users := make([]string, 0, len(userField))
 		for _, user := range userField {
+			user.Code, _ = transformStringFromEncoding(user.Code)
+			user.Name, _ = transformStringFromEncoding(user.Name)
 			users = append(users, user.Code)
 		}
 		return strings.Join(users, delimiter)
@@ -519,6 +602,8 @@ func toString(f interface{}, delimiter string) string {
 		organizationField := f.(kintone.OrganizationField)
 		organizations := make([]string, 0, len(organizationField))
 		for _, organization := range organizationField {
+			organization.Code, _ = transformStringFromEncoding(organization.Code)
+			organization.Name, _ = transformStringFromEncoding(organization.Name)
 			organizations = append(organizations, organization.Code)
 		}
 		return strings.Join(organizations, delimiter)
@@ -526,6 +611,8 @@ func toString(f interface{}, delimiter string) string {
 		groupField := f.(kintone.GroupField)
 		groups := make([]string, 0, len(groupField))
 		for _, group := range groupField {
+			group.Code, _ = transformStringFromEncoding(group.Code)
+			group.Name, _ = transformStringFromEncoding(group.Name)
 			groups = append(groups, group.Code)
 		}
 		return strings.Join(groups, delimiter)

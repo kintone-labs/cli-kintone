@@ -117,7 +117,7 @@ func transformEncodingJSONValue(fields interface{}) interface{} {
 		if fieldStringValues == "" {
 			fieldEncodingValues = kintone.SingleSelectField{Valid: false}
 		} else {
-			fieldEncodingValues = kintone.SingleSelectField{fieldStringValues, true}
+			fieldEncodingValues = kintone.SingleSelectField{String: fieldStringValues, Valid: true}
 		}
 	case kintone.CheckBoxField:
 		fieldStringValues, _ := transformStringFromEncoding(toString(fields, "\n"))

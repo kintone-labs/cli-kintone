@@ -5,7 +5,7 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 ## Version
 
-0.9.2
+0.9.4
 
 ## How to Build
 
@@ -22,7 +22,7 @@ Getting the source code
 
 Install dependencies
 
-    $ export GOPATH=/path/to/your/Go/project/folder
+    $ cd ${GOPATH}/src/cli-kintone
     $ go get github.com/mattn/gom
     $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom
     $ gom -production install
@@ -30,6 +30,7 @@ Install dependencies
 build
 
     $ cd ${GOPATH}/src/cli-kintone
+    $ sudo mv vendor/ src
     $ gom build
 
 ## Downloads
@@ -119,7 +120,10 @@ English: https://developer.kintone.io/hc/en-us/articles/115002614853
 Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 ## Restriction
-* The limit of file upload size is 10 MB.
+* The limit of the file upload size is 10 MB.
+* Client certificates cannot be used with cli-kintone.
+* The following record data cannot be retrieved: Category, Status, Field group.
+* The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
 
 ## License
 

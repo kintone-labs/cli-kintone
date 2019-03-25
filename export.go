@@ -86,7 +86,10 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 			}
 			jsonArray, _ := record.MarshalJSON()
 			json := string(jsonArray)
-			fmt.Fprint(writer, json)
+			_, err := fmt.Fprint(writer, json)
+			if err != nil {
+				return err
+			}
 			i++
 		}
 		if eof {
@@ -268,7 +271,12 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(subField, "\n"))+"\"")
+							fmt.Fprint(writer, "\"")
+							_, err := fmt.Fprint(writer, escapeCol(toString(subField, "\n")))
+							if err != nil {
+								return err
+							}
+							fmt.Fprint(writer, "\"")
 						}
 					} else {
 						field := record.Fields[f.Code]
@@ -280,7 +288,12 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 									return err
 								}
 							}
-							fmt.Fprint(writer, "\""+escapeCol(toString(field, "\n"))+"\"")
+							fmt.Fprint(writer, "\"")
+							_, err := fmt.Fprint(writer, escapeCol(toString(field, "\n")))
+							if err != nil {
+								return err
+							}
+							fmt.Fprint(writer, "\"")
 						}
 					}
 					k++

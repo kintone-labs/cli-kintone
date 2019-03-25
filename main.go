@@ -19,7 +19,7 @@ import (
 const NAME = "cli-kintone"
 
 // VERSION of this package
-const VERSION = "0.9.1"
+const VERSION = "0.9.4"
 
 // IMPORT_ROW_LIMIT The maximum row will be import
 const IMPORT_ROW_LIMIT = 100

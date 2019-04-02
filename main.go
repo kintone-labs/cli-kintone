@@ -2,8 +2,6 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -13,7 +11,6 @@ import (
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
-	"golang.org/x/text/transform"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -22,7 +19,7 @@ import (
 const NAME = "cli-kintone"
 
 // VERSION of this package
-const VERSION = "0.9.1"
+const VERSION = "0.9.4"
 
 // IMPORT_ROW_LIMIT The maximum row will be import
 const IMPORT_ROW_LIMIT = 100
@@ -271,21 +268,4 @@ func importDataFromFile(app *kintone.App) error {
 		err = importFromCSV(app, file)
 	}
 	return err
-}
-
-func transformStringFromEncoding(str string) (string, error) {
-	transformString := str
-	encoding := getEncoding()
-	if encoding != nil {
-		return transformEncoding(strings.NewReader(str), encoding.NewEncoder())
-	}
-	return transformString, nil
-}
-
-func transformEncoding(rawReader io.Reader, trans transform.Transformer) (string, error) {
-	ret, err := ioutil.ReadAll(transform.NewReader(rawReader, trans))
-	if err == nil {
-		return string(ret), nil
-	}
-	return string(ret), err
 }

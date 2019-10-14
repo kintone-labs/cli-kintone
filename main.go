@@ -47,6 +47,7 @@ type Configure struct {
 	Line              uint64   `short:"l" default:"1" description:"Position index of data in the input file"`
 	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
 	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
+	Version           bool     `short:"v" long:"version" description:"Version of cli-kintone"`
 }
 
 var config Configure
@@ -159,6 +160,12 @@ func main() {
 		}
 		os.Exit(1)
 	}
+
+	if len(os.Args) > 0 && config.Version {
+		fmt.Println(VERSION)
+		os.Exit(0)
+	}
+
 	if len(os.Args) == 0 || config.AppID == 0 || (config.APIToken == "" && (config.Domain == "" || config.Login == "")) {
 		helpArg := []string{"-h"}
 		flags.ParseArgs(&config, helpArg)

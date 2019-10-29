@@ -68,6 +68,7 @@ https://github.com/kintone/cli-kintone/releases
         -l=           Position index of data in the input file (default: 1)
             --import  Import data from stdin. If "-f" is also specified, data is imported from the file instead
             --export  Export kintone data to stdout
+        -v, --version Version of cli-kintone
 
     Help Options:
         -h, --help    Show this help message

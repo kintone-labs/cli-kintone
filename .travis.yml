@@ -4,7 +4,7 @@ go:
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/mattn/gom
-script:
+script: 
 
 script:
   - go vet -x ./...
@@ -39,7 +39,7 @@ deploy:
   provider: releases
   api_key:
     secure: "Fm06thRLQNvVibTvLR00QAS6Z2r4kqSz2nzFCWDUBZpC8dB28iA7TlRgpdjE8OD2GvRKVvWiMaMY/qkQqELc+oMK604dW6+j8kRw7bTxXyAwtwNQBmhS0TRyQNqb6/0v7+wPskS0p5Ioig1LJtP3BduhRBWg7WjzIBBbWmwK90w="
-  file:
+  file:  
     - "linux-x64.zip"
     - "macos-x64.zip"
     - "windows-x64.zip"

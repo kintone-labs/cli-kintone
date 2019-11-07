@@ -5,13 +5,13 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 ## Version
 
-1.13.3
+0.9.5
 
 ## How to Build
 
 ### Requirement
 
-- Go 1.9.3
+- Go 1.13.3
 - Git and Mercurial to be able to clone the packages
 
 Getting the source code

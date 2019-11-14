@@ -32,7 +32,7 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 		return nil, true, err
 	}
 	if len(records) < 1 {
-		fmt.Println("Not found record")
+		fmt.Println("No found record")
 		fmt.Println("Please check your query or permission settings.")
 		os.Exit(1)
 	}

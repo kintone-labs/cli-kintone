@@ -31,11 +31,6 @@ func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Rec
 	if err != nil {
 		return nil, true, err
 	}
-	if len(records) < 1 {
-		fmt.Println("No record found.")
-		fmt.Println("Please check your query or permission settings.")
-		os.Exit(1)
-	}
 	return records, (len(records) < EXPORT_ROW_LIMIT), nil
 
 }

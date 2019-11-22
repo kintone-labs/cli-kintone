@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.9.3
+  - 1.13.3
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/mattn/gom
@@ -29,12 +29,6 @@ script:
   - gom build -v -tags "forceposix" -o build/windows-x64/cli-kintone.exe
   - zip windows-x64.zip build/windows-x64/cli-kintone.exe
 
-  # Build windows/386 archive
-  - export GOOS="windows"
-  - export GOARCH="386"
-  - gom build -v -tags "forceposix" -o build/windows/cli-kintone.exe
-  - zip windows.zip build/windows/cli-kintone.exe
-
 deploy:
   provider: releases
   api_key:
@@ -43,7 +37,6 @@ deploy:
     - "linux-x64.zip"
     - "macos-x64.zip"
     - "windows-x64.zip"
-    - "windows.zip"
   skip_cleanup: true
   all_branches: true  # https://github.com/travis-ci/travis-ci/issues/1675
   on:

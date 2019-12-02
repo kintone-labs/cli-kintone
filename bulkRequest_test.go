@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"testing"
-
+	"os"
 	"github.com/kintone/go-kintone"
 )
 

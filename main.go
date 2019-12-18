@@ -228,8 +228,6 @@ func main() {
 	}
 
 	app.SetUserAgentHeader(NAME + "/" + VERSION + " (" + runtime.GOOS + " " + runtime.GOARCH + ")")
-	fmt.Printf(app.GetUserAgentHeader())
-	fmt.Printf("\n")
 
 	// Old logic without force import/export
 	if config.IsImport == false && config.IsExport == false {

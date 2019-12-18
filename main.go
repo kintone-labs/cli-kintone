@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"runtime"
 
 	"github.com/howeyc/gopass"
 	"github.com/kintone/go-kintone"
@@ -225,6 +226,10 @@ func main() {
 	if config.BasicAuthUser != "" {
 		app.SetBasicAuth(config.BasicAuthUser, config.BasicAuthPassword)
 	}
+
+	app.SetUserAgentHeader(NAME + "/" + VERSION + " (" + runtime.GOOS + " " + runtime.GOARCH + ")")
+	fmt.Printf(app.GetUserAgentHeader())
+	fmt.Printf("\n")
 
 	// Old logic without force import/export
 	if config.IsImport == false && config.IsExport == false {

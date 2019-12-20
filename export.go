@@ -14,29 +14,60 @@ import (
 	"golang.org/x/text/transform"
 )
 
+func getRecordsHaveOffsetOrLimit(app *kintone.App, fields []string) ([]*kintone.Record, error) {
+	records, err := app.GetRecords(fields, config.Query)
+
+	return records, err
+}
+
+func getAllRecordByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
+	cursor, err := app.CreateCursor(fields, query, size)
+	records, err := app.GetRecordsByCursor(cursor.Id)
+	return records, err
+}
+func getRecordBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
+	data := []*kintone.Record{}
+	if len(result) > 0 {
+		data = result
+	}
+
+	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
+	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
+
+	records, err := app.GetRecords(nil, query)
+	data = append(data, records...)
+	if len(records) == EXPORT_ROW_LIMIT {
+		return getRecordBySeekMethod(app, records[len(records)-1].Id(), data)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return data, nil
+}
 func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, bool, error) {
-
-	r := regexp.MustCompile(`limit\s+\d+`)
-	if r.MatchString(config.Query) {
-		records, err := app.GetRecords(fields, config.Query)
-
+	if config.Query != "" {
+		containLimit := regexp.MustCompile(`limit\s+\d+`)
+		containOffset := regexp.MustCompile(`offset\s+\d+`)
+		if containOffset.MatchString(config.Query) || containLimit.MatchString(config.Query) {
+			records, err := getRecordsHaveOffsetOrLimit(app, fields)
+			if err != nil {
+				return nil, true, err
+			}
+			return records, true, nil
+		}
+		records, err := getAllRecordByCursor(app, fields, config.Query, 500)
 		if err != nil {
 			return nil, true, err
 		}
 		return records, true, nil
 	}
-	newQuery := config.Query + fmt.Sprintf(" limit %v offset %v", EXPORT_ROW_LIMIT, offset)
-	records, err := app.GetRecords(fields, newQuery)
-
+	records, err := getRecordBySeekMethod(app, 0, nil)
 	if err != nil {
 		return nil, true, err
 	}
-	if len(records) < 1 {
-		fmt.Println("No record found.")
-		fmt.Println("Please check your query or permission settings.")
-		os.Exit(1)
-	}
-	return records, (len(records) < EXPORT_ROW_LIMIT), nil
+	return records, true, nil
 
 }
 

@@ -45,6 +45,15 @@ func makeTestData(app *kintone.App) error {
 	return err
 }
 
+func TestSeekMethod(t *testing.T) {
+	app := newApp()
+	config.Query = ""
+	_, _, err := getRecords(app, []string{"id", "Status"}, 0)
+	if err != nil {
+		t.Error("TestSeekMethod is failed:", err)
+	}
+}
+
 func TestExport1(t *testing.T) {
 	buf := &bytes.Buffer{}
 

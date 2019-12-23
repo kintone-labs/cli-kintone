@@ -27,7 +27,6 @@ func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size
 }
 
 func getAllRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
-	fmt.Println("me")
 	data := []*kintone.Record{}
 	if len(result) > 0 {
 		data = result

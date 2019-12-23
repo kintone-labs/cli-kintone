@@ -48,9 +48,40 @@ func makeTestData(app *kintone.App) error {
 func TestSeekMethod(t *testing.T) {
 	app := newApp()
 	config.Query = ""
-	_, _, err := getRecords(app, []string{"id", "Status"}, 0)
+	records, _, err := getRecords(app, []string{"id", "Status"})
 	if err != nil {
 		t.Error("TestSeekMethod is failed:", err)
+	}
+	for _, record := range records {
+		fmt.Println(record.Fields)
+
+	}
+}
+
+func TestGetRecordsHaveLimitOffset(t *testing.T) {
+	app := newApp()
+	config.Query = "limit 100 offset 0"
+	records, _, err := getRecords(app, []string{"id", "Status"})
+	if err != nil {
+		t.Error("TestGetRecordsHaveLimitOffset is failed:", err)
+	}
+
+	for _, record := range records {
+		fmt.Println(record.Fields)
+
+	}
+}
+
+func TestGetRecordsHaveQuery(t *testing.T) {
+	app := newApp()
+	config.Query = "order by $id desc"
+	records, _, err := getRecords(app, nil)
+	if err != nil {
+		t.Error("TestGetRecordsHaveQuery is failed:", err)
+	}
+	for _, record := range records {
+		fmt.Println(record.Fields)
+
 	}
 }
 

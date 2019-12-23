@@ -20,7 +20,7 @@ func getRecordsHaveOffsetOrLimit(app *kintone.App, fields []string) ([]*kintone.
 	return records, err
 }
 
-func getAllRecordByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
+func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
 	cursor, err := app.CreateCursor(fields, query, size)
 	if err != nil {
 		return nil, err
@@ -31,7 +31,8 @@ func getAllRecordByCursor(app *kintone.App, fields []string, query string, size 
 	}
 	return records, err
 }
-func getRecordBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
+func getRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
+	fmt.Println("me")
 	data := []*kintone.Record{}
 	if len(result) > 0 {
 		data = result
@@ -46,34 +47,42 @@ func getRecordBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record
 	}
 	data = append(data, records...)
 	if len(records) == EXPORT_ROW_LIMIT {
-		return getRecordBySeekMethod(app, records[len(records)-1].Id(), data)
+		return getRecordsBySeekMethod(app, records[len(records)-1].Id(), data)
 	}
 	return data, nil
 }
-func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, bool, error) {
+func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, error) {
 	containLimit := regexp.MustCompile(`limit\s+\d+`)
 	containOffset := regexp.MustCompile(`offset\s+\d+`)
-	if config.Query != "" && (containOffset.MatchString(config.Query) || containLimit.MatchString(config.Query)) {
+	isLimit := containLimit.MatchString(config.Query)
+	isOffset := containOffset.MatchString(config.Query)
+	if isLimit || isOffset {
 		records, err := getRecordsHaveOffsetOrLimit(app, fields)
 		if err != nil {
-			return nil, true, err
+			return nil, err
 		}
-		return records, true, nil
+		return records, nil
 	}
-
-	if config.Query != "" && !containOffset.MatchString(config.Query) && !containLimit.MatchString(config.Query) {
-		records, err := getAllRecordByCursor(app, fields, config.Query, 500)
-		if err != nil {
-			return nil, true, err
-		}
-		return records, true, nil
-	}
-
-	records, err := getRecordBySeekMethod(app, 0, nil)
+	records, err := getAllRecordsByCursor(app, fields, config.Query, 500)
 	if err != nil {
-		return nil, true, err
+		return nil, err
 	}
-	return records, true, nil
+	return records, nil
+}
+func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, error) {
+	if config.Query != "" {
+		records, err := getRecordsWithQuery(app, fields)
+		if err != nil {
+			return nil, err
+		}
+		return records, nil
+
+	}
+	records, err := getRecordsBySeekMethod(app, 0, nil)
+	if err != nil {
+		return nil, err
+	}
+	return records, nil
 }
 
 func getWriter(writer io.Writer) io.Writer {
@@ -90,7 +99,7 @@ func writeJSON(app *kintone.App, _writer io.Writer) error {
 	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
-	records, _, err := getRecords(app, config.Fields)
+	records, err := getRecords(app, config.Fields)
 	if err != nil {
 		return err
 	}
@@ -236,7 +245,7 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 	}
 
 	hasTable := false
-	records, _, err := getRecords(app, config.Fields)
+	records, err := getRecords(app, config.Fields)
 	if err != nil {
 		return err
 	}

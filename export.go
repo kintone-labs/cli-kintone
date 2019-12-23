@@ -14,12 +14,6 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func getRecordsHaveOffsetOrLimit(app *kintone.App, fields []string) ([]*kintone.Record, error) {
-	records, err := app.GetRecords(fields, config.Query)
-
-	return records, err
-}
-
 func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
 	cursor, err := app.CreateCursor(fields, query, size)
 	if err != nil {
@@ -31,7 +25,8 @@ func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size
 	}
 	return records, err
 }
-func getRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
+
+func getAllRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
 	fmt.Println("me")
 	data := []*kintone.Record{}
 	if len(result) > 0 {
@@ -47,17 +42,19 @@ func getRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Recor
 	}
 	data = append(data, records...)
 	if len(records) == EXPORT_ROW_LIMIT {
-		return getRecordsBySeekMethod(app, records[len(records)-1].Id(), data)
+		return getAllRecordsBySeekMethod(app, records[len(records)-1].Id(), data)
 	}
+
 	return data, nil
 }
+
 func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, error) {
 	containLimit := regexp.MustCompile(`limit\s+\d+`)
 	containOffset := regexp.MustCompile(`offset\s+\d+`)
 	isLimit := containLimit.MatchString(config.Query)
 	isOffset := containOffset.MatchString(config.Query)
 	if isLimit || isOffset {
-		records, err := getRecordsHaveOffsetOrLimit(app, fields)
+		records, err := app.GetRecords(fields, config.Query)
 		if err != nil {
 			return nil, err
 		}
@@ -67,8 +64,10 @@ func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, 
 	if err != nil {
 		return nil, err
 	}
+
 	return records, nil
 }
+
 func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, error) {
 	if config.Query != "" {
 		records, err := getRecordsWithQuery(app, fields)
@@ -78,10 +77,11 @@ func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, error) {
 		return records, nil
 
 	}
-	records, err := getRecordsBySeekMethod(app, 0, nil)
+	records, err := getAllRecordsBySeekMethod(app, 0, nil)
 	if err != nil {
 		return nil, err
 	}
+
 	return records, nil
 }
 
@@ -95,7 +95,6 @@ func getWriter(writer io.Writer) io.Writer {
 
 func writeJSON(app *kintone.App, _writer io.Writer) error {
 	i := 0
-	// offset := int64(0)
 	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
@@ -234,7 +233,6 @@ func hasSubTable(columns []*Column) bool {
 
 func writeCsv(app *kintone.App, _writer io.Writer) error {
 	i := uint64(0)
-	// offset := int64(0)
 	writer := getWriter(_writer)
 	var columns Columns
 

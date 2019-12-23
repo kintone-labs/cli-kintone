@@ -59,7 +59,7 @@ func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, 
 		}
 		return records, nil
 	}
-	records, err := getAllRecordsByCursor(app, fields, config.Query, 500)
+	records, err := getAllRecordsByCursor(app, fields, config.Query, EXPORT_ROW_LIMIT)
 	if err != nil {
 		return nil, err
 	}

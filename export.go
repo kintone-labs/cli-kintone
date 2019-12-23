@@ -22,7 +22,13 @@ func getRecordsHaveOffsetOrLimit(app *kintone.App, fields []string) ([]*kintone.
 
 func getAllRecordByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
 	cursor, err := app.CreateCursor(fields, query, size)
+	if err != nil {
+		return nil, err
+	}
 	records, err := app.GetRecordsByCursor(cursor.Id)
+	if err != nil {
+		return nil, err
+	}
 	return records, err
 }
 func getRecordBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
@@ -35,40 +41,39 @@ func getRecordBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record
 	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
 	records, err := app.GetRecords(nil, query)
+	if err != nil {
+		return nil, err
+	}
 	data = append(data, records...)
 	if len(records) == EXPORT_ROW_LIMIT {
 		return getRecordBySeekMethod(app, records[len(records)-1].Id(), data)
 	}
-
-	if err != nil {
-		return nil, err
-	}
-
 	return data, nil
 }
-func getRecords(app *kintone.App, fields []string, offset int64) ([]*kintone.Record, bool, error) {
-	if config.Query != "" {
-		containLimit := regexp.MustCompile(`limit\s+\d+`)
-		containOffset := regexp.MustCompile(`offset\s+\d+`)
-		if containOffset.MatchString(config.Query) || containLimit.MatchString(config.Query) {
-			records, err := getRecordsHaveOffsetOrLimit(app, fields)
-			if err != nil {
-				return nil, true, err
-			}
-			return records, true, nil
+func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, bool, error) {
+	containLimit := regexp.MustCompile(`limit\s+\d+`)
+	containOffset := regexp.MustCompile(`offset\s+\d+`)
+	if config.Query != "" && (containOffset.MatchString(config.Query) || containLimit.MatchString(config.Query)) {
+		records, err := getRecordsHaveOffsetOrLimit(app, fields)
+		if err != nil {
+			return nil, true, err
 		}
+		return records, true, nil
+	}
+
+	if config.Query != "" && !containOffset.MatchString(config.Query) && !containLimit.MatchString(config.Query) {
 		records, err := getAllRecordByCursor(app, fields, config.Query, 500)
 		if err != nil {
 			return nil, true, err
 		}
 		return records, true, nil
 	}
+
 	records, err := getRecordBySeekMethod(app, 0, nil)
 	if err != nil {
 		return nil, true, err
 	}
 	return records, true, nil
-
 }
 
 func getWriter(writer io.Writer) io.Writer {
@@ -81,57 +86,53 @@ func getWriter(writer io.Writer) io.Writer {
 
 func writeJSON(app *kintone.App, _writer io.Writer) error {
 	i := 0
-	offset := int64(0)
+	// offset := int64(0)
 	writer := getWriter(_writer)
 
 	fmt.Fprint(writer, "{\"records\": [\n")
-	for ; ; offset += EXPORT_ROW_LIMIT {
-		records, eof, err := getRecords(app, config.Fields, offset)
-		if err != nil {
-			return err
+	records, _, err := getRecords(app, config.Fields)
+	if err != nil {
+		return err
+	}
+	for _, record := range records {
+		if i > 0 {
+			fmt.Fprint(writer, ",\n")
 		}
-		for _, record := range records {
-			if i > 0 {
-				fmt.Fprint(writer, ",\n")
-			}
-			// Download file to local folder that is the value of param -b
-			for fieldCode, fieldInfo := range record.Fields {
-				fieldType := reflect.TypeOf(fieldInfo).String()
-				if fieldType == "kintone.FileField" {
-					dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
-					err := downloadFile(app, fieldInfo, dir)
-					if err != nil {
-						return err
+		// Download file to local folder that is the value of param -b
+		for fieldCode, fieldInfo := range record.Fields {
+			fieldType := reflect.TypeOf(fieldInfo).String()
+			if fieldType == "kintone.FileField" {
+				dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
+				err := downloadFile(app, fieldInfo, dir)
+				if err != nil {
+					return err
 
-					}
-				} else if fieldType == "kintone.SubTableField" {
-					subTable := fieldInfo.(kintone.SubTableField)
-					for subTableIndex, subTableValue := range subTable {
-						for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
-							if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
-								dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
-								err := downloadFile(app, fieldValueInSubTable, dir)
-								if err != nil {
-									return err
+				}
+			} else if fieldType == "kintone.SubTableField" {
+				subTable := fieldInfo.(kintone.SubTableField)
+				for subTableIndex, subTableValue := range subTable {
+					for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
+						if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
+							dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
+							err := downloadFile(app, fieldValueInSubTable, dir)
+							if err != nil {
+								return err
 
-								}
 							}
 						}
 					}
 				}
 			}
-			jsonArray, _ := record.MarshalJSON()
-			json := string(jsonArray)
-			_, err := fmt.Fprint(writer, json)
-			if err != nil {
-				return err
-			}
-			i++
 		}
-		if eof {
-			break
+		jsonArray, _ := record.MarshalJSON()
+		json := string(jsonArray)
+		_, err := fmt.Fprint(writer, json)
+		if err != nil {
+			return err
 		}
+		i++
 	}
+
 	fmt.Fprint(writer, "\n]}")
 
 	return nil
@@ -224,7 +225,7 @@ func hasSubTable(columns []*Column) bool {
 
 func writeCsv(app *kintone.App, _writer io.Writer) error {
 	i := uint64(0)
-	offset := int64(0)
+	// offset := int64(0)
 	writer := getWriter(_writer)
 	var columns Columns
 
@@ -235,112 +236,107 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 	}
 
 	hasTable := false
-	for ; ; offset += EXPORT_ROW_LIMIT {
-		records, eof, err := getRecords(app, config.Fields, offset)
-		if err != nil {
-			return err
+	records, _, err := getRecords(app, config.Fields)
+	if err != nil {
+		return err
+	}
+
+	for _, record := range records {
+		if i == 0 {
+			// write csv header
+			if config.Fields == nil {
+				columns = makeColumns(fields)
+			} else {
+				columns = makePartialColumns(fields, config.Fields)
+			}
+			//sort.Sort(columns)
+			j := 0
+			hasTable = hasSubTable(columns)
+			if hasTable {
+				fmt.Fprint(writer, "*")
+				j++
+			}
+			for _, f := range columns {
+				if j > 0 {
+					fmt.Fprint(writer, ",")
+				}
+				fmt.Fprint(writer, "\""+f.Code+"\"")
+				j++
+			}
+			fmt.Fprint(writer, "\r\n")
+		}
+		rowID := record.Id()
+		if rowID == 0 {
+			rowID = i
 		}
 
-		for _, record := range records {
-			if i == 0 {
-				// write csv header
-				if config.Fields == nil {
-					columns = makeColumns(fields)
-				} else {
-					columns = makePartialColumns(fields, config.Fields)
-				}
-				//sort.Sort(columns)
-				j := 0
-				hasTable = hasSubTable(columns)
-				if hasTable {
+		// determine subtable's row count
+		rowNum := getSubTableRowCount(record, columns)
+
+		for j := 0; j < rowNum; j++ {
+			k := 0
+			if hasTable {
+				if j == 0 {
 					fmt.Fprint(writer, "*")
-					j++
 				}
-				for _, f := range columns {
-					if j > 0 {
-						fmt.Fprint(writer, ",")
-					}
-					fmt.Fprint(writer, "\""+f.Code+"\"")
-					j++
-				}
-				fmt.Fprint(writer, "\r\n")
-			}
-			rowID := record.Id()
-			if rowID == 0 {
-				rowID = i
+				k++
 			}
 
-			// determine subtable's row count
-			rowNum := getSubTableRowCount(record, columns)
-
-			for j := 0; j < rowNum; j++ {
-				k := 0
-				if hasTable {
-					if j == 0 {
-						fmt.Fprint(writer, "*")
-					}
-					k++
+			for _, f := range columns {
+				if k > 0 {
+					fmt.Fprint(writer, ",")
 				}
 
-				for _, f := range columns {
-					if k > 0 {
-						fmt.Fprint(writer, ",")
+				if f.Code == "$id" {
+					fmt.Fprintf(writer, "\"%d\"", record.Id())
+				} else if f.Code == "$revision" {
+					fmt.Fprintf(writer, "\"%d\"", record.Revision())
+				} else if f.Type == kintone.FT_SUBTABLE {
+					table := record.Fields[f.Code].(kintone.SubTableField)
+					if j < len(table) {
+						fmt.Fprintf(writer, "\"%d\"", table[j].Id())
 					}
-
-					if f.Code == "$id" {
-						fmt.Fprintf(writer, "\"%d\"", record.Id())
-					} else if f.Code == "$revision" {
-						fmt.Fprintf(writer, "\"%d\"", record.Revision())
-					} else if f.Type == kintone.FT_SUBTABLE {
-						table := record.Fields[f.Code].(kintone.SubTableField)
-						if j < len(table) {
-							fmt.Fprintf(writer, "\"%d\"", table[j].Id())
-						}
-					} else if f.IsSubField {
-						table := record.Fields[f.Table].(kintone.SubTableField)
-						if j < len(table) {
-							subField := table[j].Fields[f.Code]
-							if f.Type == kintone.FT_FILE {
-								dir := fmt.Sprintf("%s-%d-%d", f.Code, rowID, j)
-								err := downloadFile(app, subField, dir)
-								if err != nil {
-									return err
-								}
-							}
-							fmt.Fprint(writer, "\"")
-							_, err := fmt.Fprint(writer, escapeCol(toString(subField, "\n")))
+				} else if f.IsSubField {
+					table := record.Fields[f.Table].(kintone.SubTableField)
+					if j < len(table) {
+						subField := table[j].Fields[f.Code]
+						if f.Type == kintone.FT_FILE {
+							dir := fmt.Sprintf("%s-%d-%d", f.Code, rowID, j)
+							err := downloadFile(app, subField, dir)
 							if err != nil {
 								return err
 							}
-							fmt.Fprint(writer, "\"")
 						}
-					} else {
-						field := record.Fields[f.Code]
-						if field != nil {
-							if j == 0 && f.Type == kintone.FT_FILE {
-								dir := fmt.Sprintf("%s-%d", f.Code, rowID)
-								err := downloadFile(app, field, dir)
-								if err != nil {
-									return err
-								}
-							}
-							fmt.Fprint(writer, "\"")
-							_, err := fmt.Fprint(writer, escapeCol(toString(field, "\n")))
+						fmt.Fprint(writer, "\"")
+						_, err := fmt.Fprint(writer, escapeCol(toString(subField, "\n")))
+						if err != nil {
+							return err
+						}
+						fmt.Fprint(writer, "\"")
+					}
+				} else {
+					field := record.Fields[f.Code]
+					if field != nil {
+						if j == 0 && f.Type == kintone.FT_FILE {
+							dir := fmt.Sprintf("%s-%d", f.Code, rowID)
+							err := downloadFile(app, field, dir)
 							if err != nil {
 								return err
 							}
-							fmt.Fprint(writer, "\"")
 						}
+						fmt.Fprint(writer, "\"")
+						_, err := fmt.Fprint(writer, escapeCol(toString(field, "\n")))
+						if err != nil {
+							return err
+						}
+						fmt.Fprint(writer, "\"")
 					}
-					k++
 				}
-				fmt.Fprint(writer, "\r\n")
+				k++
 			}
-			i++
+			fmt.Fprint(writer, "\r\n")
 		}
-		if eof {
-			break
-		}
+		i++
 	}
 
 	return nil

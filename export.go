@@ -266,6 +266,7 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, isH
 				j++
 			}
 			fmt.Fprint(writer, "\r\n")
+			isHeader = false
 		}
 		rowID := record.Id()
 		if rowID == 0 {

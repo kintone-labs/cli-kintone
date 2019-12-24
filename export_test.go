@@ -49,7 +49,7 @@ func TestSeekMethod(t *testing.T) {
 	app := newApp()
 	buf := &bytes.Buffer{}
 	config.Query = ""
-	err := getAllRecordsBySeekMethod(app, 0, buf)
+	err := getAllRecordsBySeekMethod(app, 0, buf, true)
 	if err != nil {
 		t.Error("TestSeekMethod is failed:", err)
 	}
@@ -86,7 +86,7 @@ func TestExport1(t *testing.T) {
 	config.Fields = []string{"single_line_text", "multi_line_text", "number"}
 	config.Query = "order by record_number asc"
 
-	err := writeCsv(app, buf, nil)
+	err := writeCsv(app, buf, nil, true)
 	if err != nil {
 		t.Error(err)
 	}
@@ -154,7 +154,7 @@ func TestExport2(t *testing.T) {
 
 	config.Fields = []string{"single_line_text", "multi_line_text", "number", "table"}
 	config.Query = "order by record_number asc"
-	err := writeCsv(app, buf, nil)
+	err := writeCsv(app, buf, nil, true)
 	if err != nil {
 		t.Error(err)
 	}

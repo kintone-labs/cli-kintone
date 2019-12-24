@@ -26,7 +26,7 @@ func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size
 	return records, err
 }
 
-func getAllRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer) error {
+func getAllRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer, isStatus bool) error {
 	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
 	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
@@ -37,10 +37,10 @@ func getAllRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer) er
 	if config.Format == "json" {
 		err = writeJSON(app, writer, records)
 	} else {
-		err = writeCsv(app, writer, records)
+		err = writeCsv(app, writer, records, isStatus)
 	}
 	if len(records) == EXPORT_ROW_LIMIT {
-		return getAllRecordsBySeekMethod(app, records[len(records)-1].Id(), writer)
+		return getAllRecordsBySeekMethod(app, records[len(records)-1].Id(), writer, false)
 	}
 
 	return nil
@@ -59,7 +59,7 @@ func getRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) er
 		if config.Format == "json" {
 			err = writeJSON(app, writer, records)
 		} else {
-			err = writeCsv(app, writer, records)
+			err = writeCsv(app, writer, records, true)
 		}
 		if err != nil {
 			return err
@@ -69,6 +69,7 @@ func getRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) er
 	}
 	records := &kintone.GetRecordsCursorResponse{}
 	var err error
+	isStatus := true
 	for {
 		records, err = getAllRecordsByCursor(app, fields, config.Query, EXPORT_ROW_LIMIT)
 		if err != nil {
@@ -77,7 +78,8 @@ func getRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) er
 		if config.Format == "json" {
 			err = writeJSON(app, writer, records.Records)
 		} else {
-			err = writeCsv(app, writer, records.Records)
+			err = writeCsv(app, writer, records.Records, isStatus)
+			isStatus = false
 		}
 		if err != nil {
 			return err
@@ -230,7 +232,7 @@ func hasSubTable(columns []*Column) bool {
 	return false
 }
 
-func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record) error {
+func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, isHeader bool) error {
 	i := uint64(0)
 	var columns Columns
 
@@ -242,7 +244,7 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record) err
 
 	hasTable := false
 	for _, record := range records {
-		if i == 0 {
+		if isHeader {
 			// write csv header
 			if config.Fields == nil {
 				columns = makeColumns(fields)

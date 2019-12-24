@@ -229,10 +229,11 @@ func main() {
 	// Old logic without force import/export
 	if config.IsImport == false && config.IsExport == false {
 		if config.FilePath == "" {
-			if config.Format == "json" {
-				err = writeJSON(app, os.Stdout)
+			writer := getWriter(os.Stdout)
+			if config.Query != "" {
+				err = getRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = writeCsv(app, os.Stdout)
+				err = getAllRecordsBySeekMethod(app, 0, writer)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -255,10 +256,11 @@ func main() {
 		if config.FilePath != "" {
 			log.Fatal("The -f option is not supported with the --export option.")
 		}
-		if config.Format == "json" {
-			err = writeJSON(app, os.Stdout)
+		writer := getWriter(os.Stdout)
+		if config.Query != "" {
+			err = getRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = writeCsv(app, os.Stdout)
+			err = getAllRecordsBySeekMethod(app, 0, writer)
 		}
 	}
 	if err != nil {

@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) (*kintone.RecordCursor, error) {
+func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) (*kintone.GetRecordsCursorResponse, error) {
 	cursor, err := app.CreateCursor(fields, query, size)
 	if err != nil {
 		return nil, err
@@ -67,7 +67,7 @@ func getRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) er
 
 		return nil
 	}
-	records := &kintone.RecordCursor{}
+	records := &kintone.GetRecordsCursorResponse{}
 	var err error
 	for {
 		records, err = getAllRecordsByCursor(app, fields, config.Query, EXPORT_ROW_LIMIT)

@@ -233,7 +233,7 @@ func main() {
 			if config.Query != "" {
 				err = getRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = getAllRecordsBySeekMethod(app, 0, writer)
+				err = getAllRecordsBySeekMethod(app, 0, writer, true)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -260,7 +260,7 @@ func main() {
 		if config.Query != "" {
 			err = getRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = getAllRecordsBySeekMethod(app, 0, writer)
+			err = getAllRecordsBySeekMethod(app, 0, writer, true)
 		}
 	}
 	if err != nil {

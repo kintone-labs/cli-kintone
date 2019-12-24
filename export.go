@@ -14,7 +14,7 @@ import (
 	"golang.org/x/text/transform"
 )
 
-func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) ([]*kintone.Record, error) {
+func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size uint64) (*kintone.RecordCursor, error) {
 	cursor, err := app.CreateCursor(fields, query, size)
 	if err != nil {
 		return nil, err
@@ -26,28 +26,27 @@ func getAllRecordsByCursor(app *kintone.App, fields []string, query string, size
 	return records, err
 }
 
-func getAllRecordsBySeekMethod(app *kintone.App, id uint64, result []*kintone.Record) ([]*kintone.Record, error) {
-	data := []*kintone.Record{}
-	if len(result) > 0 {
-		data = result
-	}
-
+func getAllRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer) error {
 	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
 	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
 	records, err := app.GetRecords(nil, query)
 	if err != nil {
-		return nil, err
+		return err
 	}
-	data = append(data, records...)
+	if config.Format == "json" {
+		err = writeJSON(app, writer, records)
+	} else {
+		err = writeCsv(app, writer, records)
+	}
 	if len(records) == EXPORT_ROW_LIMIT {
-		return getAllRecordsBySeekMethod(app, records[len(records)-1].Id(), data)
+		return getAllRecordsBySeekMethod(app, records[len(records)-1].Id(), writer)
 	}
 
-	return data, nil
+	return nil
 }
 
-func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, error) {
+func getRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) error {
 	containLimit := regexp.MustCompile(`limit\s+\d+`)
 	containOffset := regexp.MustCompile(`offset\s+\d+`)
 	isLimit := containLimit.MatchString(config.Query)
@@ -55,33 +54,40 @@ func getRecordsWithQuery(app *kintone.App, fields []string) ([]*kintone.Record, 
 	if isLimit || isOffset {
 		records, err := app.GetRecords(fields, config.Query)
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return records, nil
-	}
-	records, err := getAllRecordsByCursor(app, fields, config.Query, EXPORT_ROW_LIMIT)
-	if err != nil {
-		return nil, err
-	}
-
-	return records, nil
-}
-
-func getRecords(app *kintone.App, fields []string) ([]*kintone.Record, error) {
-	if config.Query != "" {
-		records, err := getRecordsWithQuery(app, fields)
+		if config.Format == "json" {
+			err = writeJSON(app, writer, records)
+		} else {
+			err = writeCsv(app, writer, records)
+		}
 		if err != nil {
-			return nil, err
+			return err
 		}
-		return records, nil
 
+		return nil
 	}
-	records, err := getAllRecordsBySeekMethod(app, 0, nil)
-	if err != nil {
-		return nil, err
+	records := &kintone.RecordCursor{}
+	var err error
+	for {
+		records, err = getAllRecordsByCursor(app, fields, config.Query, EXPORT_ROW_LIMIT)
+		if err != nil {
+			return err
+		}
+		if config.Format == "json" {
+			err = writeJSON(app, writer, records.Records)
+		} else {
+			err = writeCsv(app, writer, records.Records)
+		}
+		if err != nil {
+			return err
+		}
+		if !records.Next {
+			break
+		}
 	}
 
-	return records, nil
+	return nil
 }
 
 func getWriter(writer io.Writer) io.Writer {
@@ -92,15 +98,9 @@ func getWriter(writer io.Writer) io.Writer {
 	return transform.NewWriter(writer, encoding.NewEncoder())
 }
 
-func writeJSON(app *kintone.App, _writer io.Writer) error {
+func writeJSON(app *kintone.App, writer io.Writer, records []*kintone.Record) error {
 	i := 0
-	writer := getWriter(_writer)
-
 	fmt.Fprint(writer, "{\"records\": [\n")
-	records, err := getRecords(app, config.Fields)
-	if err != nil {
-		return err
-	}
 	for _, record := range records {
 		if i > 0 {
 			fmt.Fprint(writer, ",\n")
@@ -230,9 +230,8 @@ func hasSubTable(columns []*Column) bool {
 	return false
 }
 
-func writeCsv(app *kintone.App, _writer io.Writer) error {
+func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record) error {
 	i := uint64(0)
-	writer := getWriter(_writer)
 	var columns Columns
 
 	// retrieve field list
@@ -242,11 +241,6 @@ func writeCsv(app *kintone.App, _writer io.Writer) error {
 	}
 
 	hasTable := false
-	records, err := getRecords(app, config.Fields)
-	if err != nil {
-		return err
-	}
-
 	for _, record := range records {
 		if i == 0 {
 			// write csv header

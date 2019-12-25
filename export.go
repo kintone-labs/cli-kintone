@@ -33,6 +33,7 @@ func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Write
 	}
 
 	records, err := app.GetRecords(nil, query)
+	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
@@ -50,6 +51,7 @@ func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writ
 	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
 	records, err := app.GetRecords(nil, query)
+	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
@@ -83,6 +85,7 @@ func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
 
 func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 	records, err := app.GetRecords(fields, config.Query)
+	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
@@ -116,6 +119,7 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
+		checkNoRecord(recordsCursor.Records)
 		if err != nil {
 			return err
 		}
@@ -155,6 +159,7 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
+		checkNoRecord(recordsCursor.Records)
 		if err != nil {
 			return err
 		}
@@ -169,6 +174,14 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		}
 	}
 	return nil
+}
+
+func checkNoRecord(records []*kintone.Record) {
+	if len(records) < 1 {
+		fmt.Println("No record found.")
+		fmt.Println("Please check your query or permission settings.")
+		os.Exit(1)
+	}
 }
 
 func exportRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) error {

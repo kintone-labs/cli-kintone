@@ -231,9 +231,9 @@ func main() {
 		if config.FilePath == "" {
 			writer := getWriter(os.Stdout)
 			if config.Query != "" {
-				err = getRecordsWithQuery(app, config.Fields, writer)
+				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = getAllRecordsBySeekMethod(app, 0, writer, true)
+				err = exportRecordsBySeekMethod(app, writer)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -258,9 +258,9 @@ func main() {
 		}
 		writer := getWriter(os.Stdout)
 		if config.Query != "" {
-			err = getRecordsWithQuery(app, config.Fields, writer)
+			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = getAllRecordsBySeekMethod(app, 0, writer, true)
+			err = exportRecordsBySeekMethod(app, writer)
 		}
 	}
 	if err != nil {

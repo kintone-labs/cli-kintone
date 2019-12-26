@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/PHAM-GIA-HUONG/go-kintone"
+	"github.com/kintone/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -381,7 +381,6 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, col
 
 		// determine subtable's row count
 		rowNum := getSubTableRowCount(record, columns)
-		fmt.Println("columns", columns)
 		for j := 0; j < rowNum; j++ {
 			k := 0
 			if hasTable {

@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kintone/go-kintone"
+	"github.com/PHAM-GIA-HUONG/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -20,12 +20,12 @@ const (
 )
 
 func getAllRecordsByCursor(app *kintone.App, id string) (*kintone.GetRecordsCursorResponse, error) {
-	records, err := app.GetRecordsByCursor(id)
-	checkNoRecord(records)
+	recordsCursor, err := app.GetRecordsByCursor(id)
+	checkNoRecord(recordsCursor.Records)
 	if err != nil {
 		return nil, err
 	}
-	return records, nil
+	return recordsCursor, nil
 }
 
 func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, columns Columns, hasTable bool) error {
@@ -381,7 +381,7 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, col
 
 		// determine subtable's row count
 		rowNum := getSubTableRowCount(record, columns)
-
+		fmt.Println("columns", columns)
 		for j := 0; j < rowNum; j++ {
 			k := 0
 			if hasTable {

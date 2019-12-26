@@ -16,10 +16,12 @@ import (
 
 const (
 	SUBTABLE_ROW_PREFIX = "*"
+	RECORD_NOT_FOUND    = "No record found."
 )
 
 func getAllRecordsByCursor(app *kintone.App, id string) (*kintone.GetRecordsCursorResponse, error) {
 	records, err := app.GetRecordsByCursor(id)
+	checkNoRecord(records)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +77,7 @@ func writeRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer, col
 }
 
 func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
-	columns, hasTable, err := createColumn(app)
+	columns, hasTable, err := createRow(app)
 	if err != nil {
 		return err
 	}
@@ -95,7 +97,7 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 		err = writeJSON(app, writer, records)
 		fmt.Fprint(writer, "\n]}")
 	} else {
-		columns, hasTable, err := createColumn(app)
+		columns, hasTable, err := createRow(app)
 		if err != nil {
 			return err
 		}
@@ -119,7 +121,6 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 	fmt.Fprint(writer, "{\"records\": [\n")
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
-		checkNoRecord(recordsCursor.Records)
 		if err != nil {
 			return err
 		}
@@ -150,7 +151,7 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		return err
 	}
 
-	columns, hasTable, err := createColumn(app)
+	columns, hasTable, err := createRow(app)
 	if err != nil {
 		return err
 	}
@@ -178,7 +179,7 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 
 func checkNoRecord(records []*kintone.Record) {
 	if len(records) < 1 {
-		fmt.Println("No record found.")
+		fmt.Println(RECORD_NOT_FOUND)
 		fmt.Println("Please check your query or permission settings.")
 		os.Exit(1)
 	}
@@ -334,22 +335,22 @@ func hasSubTable(columns []*Column) bool {
 }
 
 func writeHeaderCsv(writer io.Writer, hasTable bool, columns Columns) {
-	j := 0
+	i := 0
 	if hasTable {
 		fmt.Fprint(writer, SUBTABLE_ROW_PREFIX)
-		j++
+		i++
 	}
 	for _, f := range columns {
-		if j > 0 {
+		if i > 0 {
 			fmt.Fprint(writer, ",")
 		}
 		fmt.Fprint(writer, "\""+f.Code+"\"")
-		j++
+		i++
 	}
 	fmt.Fprint(writer, "\r\n")
 }
 
-func createColumn(app *kintone.App) (Columns, bool, error) {
+func createRow(app *kintone.App) (Columns, bool, error) {
 	var columns Columns
 	hasTable := false
 

@@ -21,89 +21,87 @@ const (
 
 func getAllRecordsByCursor(app *kintone.App, id string) (*kintone.GetRecordsCursorResponse, error) {
 	recordsCursor, err := app.GetRecordsByCursor(id)
-	checkNoRecord(recordsCursor.Records)
 	if err != nil {
 		return nil, err
 	}
+	checkNoRecord(recordsCursor.Records)
 	return recordsCursor, nil
 }
 
-func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, columns Columns, hasTable bool) error {
+func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
 	query := fmt.Sprintf(" order by $id desc limit %v", EXPORT_ROW_LIMIT)
 	if id > 0 {
 		query = "$id < " + fmt.Sprintf("%v", id) + query
 	}
 
 	records, err := app.GetRecords(nil, query)
-	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
-
-	err = writeCsv(app, writer, records, columns, hasTable)
+	checkNoRecord(records)
+	err = writeCsv(app, writer, records, row, hasTable)
 
 	if len(records) == EXPORT_ROW_LIMIT {
-		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, columns, hasTable)
+		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, row, hasTable)
 	}
 	return nil
 }
 
-func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, columns Columns, hasTable bool) error {
+func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
 	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
 	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
 	records, err := app.GetRecords(nil, query)
-	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
+	checkNoRecord(records)
 	err = writeJSON(app, writer, records)
 
 	if len(records) == EXPORT_ROW_LIMIT {
-		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, columns, hasTable)
+		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, row, hasTable)
 	}
 	return nil
 }
 
-func writeRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer, columns Columns, hasTable bool) error {
+func writeRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
 	if config.Format == "json" {
 		fmt.Fprint(writer, "{\"records\": [\n")
-		err := writeRecordsBySeekMethodForJson(app, id, writer, columns, hasTable)
+		err := writeRecordsBySeekMethodForJson(app, id, writer, row, hasTable)
 		fmt.Fprint(writer, "\n]}")
 		return err
 	}
-	writeHeaderCsv(writer, hasTable, columns)
-	return writeRecordsBySeekMethodForCsv(app, id, writer, columns, hasTable)
+	writeHeaderCsv(writer, hasTable, row)
+	return writeRecordsBySeekMethodForCsv(app, id, writer, row, hasTable)
 }
 
 func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
-	columns, hasTable, err := createRow(app)
+	row, hasTable, err := createRow(app)
 	if err != nil {
 		return err
 	}
 
-	return writeRecordsBySeekMethod(app, 0, writer, columns, hasTable)
+	return writeRecordsBySeekMethod(app, 0, writer, row, hasTable)
 }
 
 func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 	records, err := app.GetRecords(fields, config.Query)
-	checkNoRecord(records)
 	if err != nil {
 		return err
 	}
-
+	checkNoRecord(records)
 	if config.Format == "json" {
 		fmt.Fprint(writer, "{\"records\": [\n")
 		err = writeJSON(app, writer, records)
 		fmt.Fprint(writer, "\n]}")
 	} else {
-		columns, hasTable, err := createRow(app)
+		row, hasTable, err := createRow(app)
 		if err != nil {
 			return err
 		}
 
-		writeHeaderCsv(writer, hasTable, columns)
-		err = writeCsv(app, writer, records, columns, hasTable)
+		writeHeaderCsv(writer, hasTable, row)
+		err = writeCsv(app, writer, records, row, hasTable)
 	}
 
 	if err != nil {
@@ -151,21 +149,20 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		return err
 	}
 
-	columns, hasTable, err := createRow(app)
+	row, hasTable, err := createRow(app)
 	if err != nil {
 		return err
 	}
 
-	writeHeaderCsv(writer, hasTable, columns)
+	writeHeaderCsv(writer, hasTable, row)
 
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
-		checkNoRecord(recordsCursor.Records)
 		if err != nil {
 			return err
 		}
-
-		err = writeCsv(app, writer, recordsCursor.Records, columns, hasTable)
+		checkNoRecord(recordsCursor.Records)
+		err = writeCsv(app, writer, recordsCursor.Records, row, hasTable)
 		if err != nil {
 			return err
 		}
@@ -249,15 +246,15 @@ func writeJSON(app *kintone.App, writer io.Writer, records []*kintone.Record) er
 	return nil
 }
 
-func makeColumns(fields map[string]*kintone.FieldInfo) Columns {
-	columns := make([]*Column, 0)
+func makeRow(fields map[string]*kintone.FieldInfo) Row {
+	row := make([]*Cell, 0)
 
-	var column *Column
+	var cell *Cell
 
-	column = &Column{Code: "$id", Type: kintone.FT_ID}
-	columns = append(columns, column)
-	column = &Column{Code: "$revision", Type: kintone.FT_REVISION}
-	columns = append(columns, column)
+	cell = &Cell{Code: "$id", Type: kintone.FT_ID}
+	row = append(row, cell)
+	cell = &Cell{Code: "$revision", Type: kintone.FT_REVISION}
+	row = append(row, cell)
 
 	for _, val := range fields {
 		if val.Code == "" {
@@ -265,53 +262,53 @@ func makeColumns(fields map[string]*kintone.FieldInfo) Columns {
 		}
 		if val.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			column := &Column{Code: val.Code, Type: val.Type}
-			columns = append(columns, column)
+			cell := &Cell{Code: val.Code, Type: val.Type}
+			row = append(row, cell)
 
 			for _, subField := range val.Fields {
-				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val.Code}
-				columns = append(columns, column)
+				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val.Code}
+				row = append(row, cell)
 			}
 		} else {
-			column := &Column{Code: val.Code, Type: val.Type}
-			columns = append(columns, column)
+			cell := &Cell{Code: val.Code, Type: val.Type}
+			row = append(row, cell)
 		}
 	}
 
-	return columns
+	return row
 }
 
-func makePartialColumns(fields map[string]*kintone.FieldInfo, partialFields []string) Columns {
-	columns := make([]*Column, 0)
+func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string) Row {
+	row := make([]*Cell, 0)
 
 	for _, val := range partialFields {
-		column := getColumn(val, fields)
+		cell := getCell(val, fields)
 
-		if column.Type == "UNKNOWN" || column.IsSubField {
+		if cell.Type == "UNKNOWN" || cell.IsSubField {
 			continue
 		}
-		if column.Type == kintone.FT_SUBTABLE {
+		if cell.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			column := &Column{Code: column.Code, Type: column.Type}
-			columns = append(columns, column)
+			cell := &Cell{Code: cell.Code, Type: cell.Type}
+			row = append(row, cell)
 
 			// append all sub fields
 			field := fields[val]
 
 			for _, subField := range field.Fields {
-				column := &Column{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val}
-				columns = append(columns, column)
+				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val}
+				row = append(row, cell)
 			}
 		} else {
-			columns = append(columns, column)
+			row = append(row, cell)
 		}
 	}
-	return columns
+	return row
 }
 
-func getSubTableRowCount(record *kintone.Record, columns []*Column) int {
+func getSubTableRowCount(record *kintone.Record, row []*Cell) int {
 	var ret = 1
-	for _, c := range columns {
+	for _, c := range row {
 		if c.IsSubField {
 			subTable := record.Fields[c.Table].(kintone.SubTableField)
 
@@ -325,8 +322,8 @@ func getSubTableRowCount(record *kintone.Record, columns []*Column) int {
 	return ret
 }
 
-func hasSubTable(columns []*Column) bool {
-	for _, c := range columns {
+func hasSubTable(row []*Cell) bool {
+	for _, c := range row {
 		if c.IsSubField {
 			return true
 		}
@@ -334,13 +331,13 @@ func hasSubTable(columns []*Column) bool {
 	return false
 }
 
-func writeHeaderCsv(writer io.Writer, hasTable bool, columns Columns) {
+func writeHeaderCsv(writer io.Writer, hasTable bool, row Row) {
 	i := 0
 	if hasTable {
 		fmt.Fprint(writer, SUBTABLE_ROW_PREFIX)
 		i++
 	}
-	for _, f := range columns {
+	for _, f := range row {
 		if i > 0 {
 			fmt.Fprint(writer, ",")
 		}
@@ -350,28 +347,28 @@ func writeHeaderCsv(writer io.Writer, hasTable bool, columns Columns) {
 	fmt.Fprint(writer, "\r\n")
 }
 
-func createRow(app *kintone.App) (Columns, bool, error) {
-	var columns Columns
+func createRow(app *kintone.App) (Row, bool, error) {
+	var row Row
 	hasTable := false
 
 	// retrieve field list
 	fields, err := getFields(app)
 	if err != nil {
-		return columns, hasTable, err
+		return row, hasTable, err
 	}
 
 	if config.Fields == nil {
-		columns = makeColumns(fields)
+		row = makeRow(fields)
 	} else {
-		columns = makePartialColumns(fields, config.Fields)
+		row = makePartialRow(fields, config.Fields)
 	}
 
-	hasTable = hasSubTable(columns)
-	return columns, hasTable, err
+	hasTable = hasSubTable(row)
+	return row, hasTable, err
 
 }
 
-func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, columns Columns, hasTable bool) error {
+func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row Row, hasTable bool) error {
 	i := uint64(0)
 	for _, record := range records {
 		rowID := record.Id()
@@ -380,7 +377,7 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, col
 		}
 
 		// determine subtable's row count
-		rowNum := getSubTableRowCount(record, columns)
+		rowNum := getSubTableRowCount(record, row)
 		for j := 0; j < rowNum; j++ {
 			k := 0
 			if hasTable {
@@ -390,7 +387,7 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, col
 				k++
 			}
 
-			for _, f := range columns {
+			for _, f := range row {
 				if k > 0 {
 					fmt.Fprint(writer, ",")
 				}

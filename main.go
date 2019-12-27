@@ -63,6 +63,17 @@ type Column struct {
 // Columns config
 type Columns []*Column
 
+// Cell config
+type Cell struct {
+	Code       string
+	Type       string
+	IsSubField bool
+	Table      string
+}
+
+// Row config
+type Row []*Cell
+
 func (p Columns) Len() int {
 	return len(p)
 }
@@ -130,6 +141,43 @@ func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	// the code is not found
 	column.Type = "UNKNOWN"
 	return &column
+}
+
+// set Cell information from fieldinfo
+// function replace getColumn so getColumn is invalid name
+func getCell(code string, fields map[string]*kintone.FieldInfo) *Cell {
+	// initialize values
+	cell := Cell{Code: code, IsSubField: false, Table: ""}
+
+	if code == "$id" {
+		cell.Type = kintone.FT_ID
+		return &cell
+	} else if code == "$revision" {
+		cell.Type = kintone.FT_REVISION
+		return &cell
+	} else {
+		// is this code the one of sub field?
+		for _, val := range fields {
+			if val.Code == code {
+				cell.Type = val.Type
+				return &cell
+			}
+			if val.Type == kintone.FT_SUBTABLE {
+				for _, subField := range val.Fields {
+					if subField.Code == code {
+						cell.IsSubField = true
+						cell.Type = subField.Type
+						cell.Table = val.Code
+						return &cell
+					}
+				}
+			}
+		}
+	}
+
+	// the code is not found
+	cell.Type = "UNKNOWN"
+	return &cell
 }
 
 func getEncoding() encoding.Encoding {

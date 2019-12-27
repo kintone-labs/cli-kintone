@@ -19,60 +19,93 @@ const (
 	RECORD_NOT_FOUND    = "No record found."
 )
 
-func getAllRecordsByCursor(app *kintone.App, id string) (*kintone.GetRecordsCursorResponse, error) {
-	recordsCursor, err := app.GetRecordsByCursor(id)
-	if err != nil {
-		return nil, err
+func checkNoRecord(records []*kintone.Record) {
+	if len(records) < 1 {
+		fmt.Println(RECORD_NOT_FOUND)
+		fmt.Println("Please check your query or permission settings.")
+		os.Exit(1)
 	}
-	checkNoRecord(recordsCursor.Records)
-	return recordsCursor, nil
 }
 
-func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
-	query := fmt.Sprintf(" order by $id desc limit %v", EXPORT_ROW_LIMIT)
-	if id > 0 {
-		query = "$id < " + fmt.Sprintf("%v", id) + query
+func createRow(app *kintone.App) (Row, bool, error) {
+	var row Row
+	hasTable := false
+
+	// retrieve field list
+	fields, err := getFields(app)
+	if err != nil {
+		return row, hasTable, err
 	}
 
-	records, err := app.GetRecords(nil, query)
-	if err != nil {
+	if config.Fields == nil {
+		row = makeRow(fields)
+	} else {
+		row = makePartialRow(fields, config.Fields)
+	}
+
+	hasTable = hasSubTable(row)
+	return row, hasTable, err
+
+}
+
+func downloadFile(app *kintone.App, field interface{}, dir string) error {
+	if config.FileDir == "" {
+		return nil
+	}
+
+	v, ok := field.(kintone.FileField)
+	if !ok {
+		return nil
+	}
+
+	if len(v) == 0 {
+		return nil
+	}
+
+	fileDir := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, dir)
+	if err := os.MkdirAll(fileDir, 0777); err != nil {
 		return err
 	}
-	checkNoRecord(records)
-	err = writeCsv(app, writer, records, row, hasTable)
+	for idx, file := range v {
+		fileName := getUniqueFileName(file.Name, fileDir)
+		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, fileName)
+		data, err := app.Download(file.FileKey)
+		if err != nil {
+			return err
+		}
 
-	if len(records) == EXPORT_ROW_LIMIT {
-		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, row, hasTable)
+		fo, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer fo.Close()
+
+		// make a buffer to keep chunks that are read
+		buf := make([]byte, 256*1024)
+		for {
+			// read a chunk
+			n, err := data.Reader.Read(buf)
+			if err != nil && err != io.EOF {
+				return err
+			}
+			if n == 0 {
+				break
+			}
+
+			// write a chunk
+			if _, err := fo.Write(buf[:n]); err != nil {
+				return err
+			}
+		}
+
+		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, fileName)
 	}
+
 	return nil
 }
 
-func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
-	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
-	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
-
-	records, err := app.GetRecords(nil, query)
-	if err != nil {
-		return err
-	}
-	checkNoRecord(records)
-	err = writeJSON(app, writer, records)
-
-	if len(records) == EXPORT_ROW_LIMIT {
-		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, row, hasTable)
-	}
-	return nil
-}
-
-func writeRecordsBySeekMethod(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
-	if config.Format == "json" {
-		fmt.Fprint(writer, "{\"records\": [\n")
-		err := writeRecordsBySeekMethodForJson(app, id, writer, row, hasTable)
-		fmt.Fprint(writer, "\n]}")
-		return err
-	}
-	writeHeaderCsv(writer, hasTable, row)
-	return writeRecordsBySeekMethodForCsv(app, id, writer, row, hasTable)
+func escapeCol(s string) string {
+	return strings.Replace(s, "\"", "\"\"", -1)
 }
 
 func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
@@ -81,7 +114,27 @@ func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
 		return err
 	}
 
-	return writeRecordsBySeekMethod(app, 0, writer, row, hasTable)
+	if config.Format == "json" {
+		fmt.Fprint(writer, "{\"records\": [\n")
+		err := writeRecordsBySeekMethodForJson(app, 0, writer, row, hasTable)
+		fmt.Fprint(writer, "\n]}")
+		return err
+	}
+	writeHeaderCsv(writer, hasTable, row)
+	return writeRecordsBySeekMethodForCsv(app, 0, writer, row, hasTable)
+}
+
+func exportRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) error {
+	containLimit := regexp.MustCompile(`limit\s+\d+`)
+	containOffset := regexp.MustCompile(`offset\s+\d+`)
+
+	hasLimit := containLimit.MatchString(config.Query)
+	hasOffset := containOffset.MatchString(config.Query)
+
+	if hasLimit || hasOffset {
+		return exportRecords(app, fields, writer)
+	}
+	return exportRecordsByCursor(app, fields, writer)
 }
 
 func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
@@ -111,6 +164,13 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 	return nil
 }
 
+func exportRecordsByCursor(app *kintone.App, fields []string, writer io.Writer) error {
+	if config.Format == "json" {
+		return exportRecordsByCursorForJSON(app, fields, writer)
+	}
+	return exportRecordsByCursorForCsv(app, fields, writer)
+}
+
 func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.Writer) error {
 	cursor, err := app.CreateCursor(fields, config.Query, EXPORT_ROW_LIMIT)
 	if err != nil {
@@ -134,13 +194,6 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 	}
 	fmt.Fprint(writer, "\n]}")
 	return nil
-}
-
-func exportRecordsByCursor(app *kintone.App, fields []string, writer io.Writer) error {
-	if config.Format == "json" {
-		return exportRecordsByCursorForJSON(app, fields, writer)
-	}
-	return exportRecordsByCursorForCsv(app, fields, writer)
 }
 
 func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Writer) error {
@@ -174,25 +227,107 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 	return nil
 }
 
-func checkNoRecord(records []*kintone.Record) {
-	if len(records) < 1 {
-		fmt.Println(RECORD_NOT_FOUND)
-		fmt.Println("Please check your query or permission settings.")
-		os.Exit(1)
+func getAllRecordsByCursor(app *kintone.App, id string) (*kintone.GetRecordsCursorResponse, error) {
+	recordsCursor, err := app.GetRecordsByCursor(id)
+	if err != nil {
+		return nil, err
 	}
+	checkNoRecord(recordsCursor.Records)
+	return recordsCursor, nil
 }
 
-func exportRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) error {
-	containLimit := regexp.MustCompile(`limit\s+\d+`)
-	containOffset := regexp.MustCompile(`offset\s+\d+`)
-
-	hasLimit := containLimit.MatchString(config.Query)
-	hasOffset := containOffset.MatchString(config.Query)
-
-	if hasLimit || hasOffset {
-		return exportRecords(app, fields, writer)
+func getType(f interface{}) string {
+	switch f.(type) {
+	case kintone.SingleLineTextField:
+		return kintone.FT_SINGLE_LINE_TEXT
+	case kintone.MultiLineTextField:
+		return kintone.FT_MULTI_LINE_TEXT
+	case kintone.RichTextField:
+		return kintone.FT_RICH_TEXT
+	case kintone.DecimalField:
+		return kintone.FT_DECIMAL
+	case kintone.CalcField:
+		return kintone.FT_CALC
+	case kintone.CheckBoxField:
+		return kintone.FT_CHECK_BOX
+	case kintone.RadioButtonField:
+		return kintone.FT_RADIO
+	case kintone.SingleSelectField:
+		return kintone.FT_SINGLE_SELECT
+	case kintone.MultiSelectField:
+		return kintone.FT_MULTI_SELECT
+	case kintone.FileField:
+		return kintone.FT_FILE
+	case kintone.LinkField:
+		return kintone.FT_LINK
+	case kintone.DateField:
+		return kintone.FT_DATE
+	case kintone.TimeField:
+		return kintone.FT_TIME
+	case kintone.DateTimeField:
+		return kintone.FT_DATETIME
+	case kintone.UserField:
+		return kintone.FT_USER
+	case kintone.OrganizationField:
+		return kintone.FT_ORGANIZATION
+	case kintone.GroupField:
+		return kintone.FT_GROUP
+	case kintone.CategoryField:
+		return kintone.FT_CATEGORY
+	case kintone.StatusField:
+		return kintone.FT_STATUS
+	case kintone.RecordNumberField:
+		return kintone.FT_RECNUM
+	case kintone.AssigneeField:
+		return kintone.FT_ASSIGNEE
+	case kintone.CreatorField:
+		return kintone.FT_CREATOR
+	case kintone.ModifierField:
+		return kintone.FT_MODIFIER
+	case kintone.CreationTimeField:
+		return kintone.FT_CTIME
+	case kintone.ModificationTimeField:
+		return kintone.FT_MTIME
+	case kintone.SubTableField:
+		return kintone.FT_SUBTABLE
 	}
-	return exportRecordsByCursor(app, fields, writer)
+	return ""
+}
+
+func getUniqueFileName(filename, dir string) string {
+	filenameOuput := filename
+	fileExt := filepath.Ext(filename)
+	fileBaseName := filename[0 : len(filename)-len(fileExt)]
+	index := 0
+	parentDir := fmt.Sprintf("%s%c", dir, os.PathSeparator)
+	if dir == "" {
+		parentDir = ""
+	}
+	for {
+		fileFullPath := fmt.Sprintf("%s%s", parentDir, filenameOuput)
+		if !isExistFile(fileFullPath) {
+			break
+		}
+		index++
+		filenameOuput = fmt.Sprintf("%s (%d)%s", fileBaseName, index, fileExt)
+	}
+	return filenameOuput
+}
+
+func getSubTableRowCount(record *kintone.Record, row []*Cell) int {
+	var ret = 1
+	for _, cell := range row {
+		if cell.IsSubField {
+			subTable := record.Fields[cell.Table].(kintone.SubTableField)
+
+			count := len(subTable)
+			if count > ret {
+				ret = count
+			}
+		}
+	}
+
+	return ret
 }
 
 func getWriter(writer io.Writer) io.Writer {
@@ -203,47 +338,18 @@ func getWriter(writer io.Writer) io.Writer {
 	return transform.NewWriter(writer, encoding.NewEncoder())
 }
 
-func writeJSON(app *kintone.App, writer io.Writer, records []*kintone.Record) error {
-	i := 0
-	for _, record := range records {
-		if i > 0 {
-			fmt.Fprint(writer, ",\n")
+func hasSubTable(row []*Cell) bool {
+	for _, cell := range row {
+		if cell.IsSubField {
+			return true
 		}
-		// Download file to local folder that is the value of param -b
-		for fieldCode, fieldInfo := range record.Fields {
-			fieldType := reflect.TypeOf(fieldInfo).String()
-			if fieldType == "kintone.FileField" {
-				dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
-				err := downloadFile(app, fieldInfo, dir)
-				if err != nil {
-					return err
-
-				}
-			} else if fieldType == "kintone.SubTableField" {
-				subTable := fieldInfo.(kintone.SubTableField)
-				for subTableIndex, subTableValue := range subTable {
-					for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
-						if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
-							dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
-							err := downloadFile(app, fieldValueInSubTable, dir)
-							if err != nil {
-								return err
-
-							}
-						}
-					}
-				}
-			}
-		}
-		jsonArray, _ := record.MarshalJSON()
-		json := string(jsonArray)
-		_, err := fmt.Fprint(writer, json)
-		if err != nil {
-			return err
-		}
-		i++
 	}
-	return nil
+	return false
+}
+
+func isExistFile(fileFullPath string) bool {
+	_, fileNotExist := os.Stat(fileFullPath)
+	return !os.IsNotExist(fileNotExist)
 }
 
 func makeRow(fields map[string]*kintone.FieldInfo) Row {
@@ -306,66 +412,63 @@ func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string
 	return row
 }
 
-func getSubTableRowCount(record *kintone.Record, row []*Cell) int {
-	var ret = 1
-	for _, c := range row {
-		if c.IsSubField {
-			subTable := record.Fields[c.Table].(kintone.SubTableField)
-
-			count := len(subTable)
-			if count > ret {
-				ret = count
-			}
-		}
-	}
-
-	return ret
-}
-
-func hasSubTable(row []*Cell) bool {
-	for _, c := range row {
-		if c.IsSubField {
-			return true
-		}
-	}
-	return false
-}
-
 func writeHeaderCsv(writer io.Writer, hasTable bool, row Row) {
 	i := 0
 	if hasTable {
 		fmt.Fprint(writer, SUBTABLE_ROW_PREFIX)
 		i++
 	}
-	for _, f := range row {
+	for _, cell := range row {
 		if i > 0 {
 			fmt.Fprint(writer, ",")
 		}
-		fmt.Fprint(writer, "\""+f.Code+"\"")
+		fmt.Fprint(writer, "\""+cell.Code+"\"")
 		i++
 	}
 	fmt.Fprint(writer, "\r\n")
 }
 
-func createRow(app *kintone.App) (Row, bool, error) {
-	var row Row
-	hasTable := false
+func writeJSON(app *kintone.App, writer io.Writer, records []*kintone.Record) error {
+	i := 0
+	for _, record := range records {
+		if i > 0 {
+			fmt.Fprint(writer, ",\n")
+		}
+		// Download file to local folder that is the value of param -b
+		for fieldCode, fieldInfo := range record.Fields {
+			fieldType := reflect.TypeOf(fieldInfo).String()
+			if fieldType == "kintone.FileField" {
+				dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
+				err := downloadFile(app, fieldInfo, dir)
+				if err != nil {
+					return err
 
-	// retrieve field list
-	fields, err := getFields(app)
-	if err != nil {
-		return row, hasTable, err
+				}
+			} else if fieldType == "kintone.SubTableField" {
+				subTable := fieldInfo.(kintone.SubTableField)
+				for subTableIndex, subTableValue := range subTable {
+					for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
+						if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
+							dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
+							err := downloadFile(app, fieldValueInSubTable, dir)
+							if err != nil {
+								return err
+
+							}
+						}
+					}
+				}
+			}
+		}
+		jsonArray, _ := record.MarshalJSON()
+		json := string(jsonArray)
+		_, err := fmt.Fprint(writer, json)
+		if err != nil {
+			return err
+		}
+		i++
 	}
-
-	if config.Fields == nil {
-		row = makeRow(fields)
-	} else {
-		row = makePartialRow(fields, config.Fields)
-	}
-
-	hasTable = hasSubTable(row)
-	return row, hasTable, err
-
+	return nil
 }
 
 func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row Row, hasTable bool) error {
@@ -447,145 +550,40 @@ func writeCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row
 	return nil
 }
 
-func downloadFile(app *kintone.App, field interface{}, dir string) error {
-	if config.FileDir == "" {
-		return nil
+func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
+	query := fmt.Sprintf(" order by $id desc limit %v", EXPORT_ROW_LIMIT)
+	if id > 0 {
+		query = "$id < " + fmt.Sprintf("%v", id) + query
 	}
 
-	v, ok := field.(kintone.FileField)
-	if !ok {
-		return nil
-	}
-
-	if len(v) == 0 {
-		return nil
-	}
-
-	fileDir := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, dir)
-	if err := os.MkdirAll(fileDir, 0777); err != nil {
+	records, err := app.GetRecords(nil, query)
+	if err != nil {
 		return err
 	}
-	for idx, file := range v {
-		fileName := getUniqueFileName(file.Name, fileDir)
-		path := fmt.Sprintf("%s%c%s", fileDir, os.PathSeparator, fileName)
-		data, err := app.Download(file.FileKey)
-		if err != nil {
-			return err
-		}
+	checkNoRecord(records)
+	err = writeCsv(app, writer, records, row, hasTable)
 
-		fo, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-		defer fo.Close()
-
-		// make a buffer to keep chunks that are read
-		buf := make([]byte, 256*1024)
-		for {
-			// read a chunk
-			n, err := data.Reader.Read(buf)
-			if err != nil && err != io.EOF {
-				return err
-			}
-			if n == 0 {
-				break
-			}
-
-			// write a chunk
-			if _, err := fo.Write(buf[:n]); err != nil {
-				return err
-			}
-		}
-
-		v[idx].Name = fmt.Sprintf("%s%c%s", dir, os.PathSeparator, fileName)
+	if len(records) == EXPORT_ROW_LIMIT {
+		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, row, hasTable)
 	}
-
 	return nil
 }
 
-func getUniqueFileName(filename, dir string) string {
-	filenameOuput := filename
-	fileExt := filepath.Ext(filename)
-	fileBaseName := filename[0 : len(filename)-len(fileExt)]
-	index := 0
-	parentDir := fmt.Sprintf("%s%c", dir, os.PathSeparator)
-	if dir == "" {
-		parentDir = ""
-	}
-	for {
-		fileFullPath := fmt.Sprintf("%s%s", parentDir, filenameOuput)
-		if !isExistFile(fileFullPath) {
-			break
-		}
-		index++
-		filenameOuput = fmt.Sprintf("%s (%d)%s", fileBaseName, index, fileExt)
-	}
-	return filenameOuput
-}
-func isExistFile(fileFullPath string) bool {
-	_, fileNotExist := os.Stat(fileFullPath)
-	return !os.IsNotExist(fileNotExist)
-}
-func escapeCol(s string) string {
-	return strings.Replace(s, "\"", "\"\"", -1)
-}
+func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool) error {
+	defaultQuery := fmt.Sprintf(" order by $id asc limit %v", EXPORT_ROW_LIMIT)
+	query := "$id > " + fmt.Sprintf("%v", id) + defaultQuery
 
-func getType(f interface{}) string {
-	switch f.(type) {
-	case kintone.SingleLineTextField:
-		return kintone.FT_SINGLE_LINE_TEXT
-	case kintone.MultiLineTextField:
-		return kintone.FT_MULTI_LINE_TEXT
-	case kintone.RichTextField:
-		return kintone.FT_RICH_TEXT
-	case kintone.DecimalField:
-		return kintone.FT_DECIMAL
-	case kintone.CalcField:
-		return kintone.FT_CALC
-	case kintone.CheckBoxField:
-		return kintone.FT_CHECK_BOX
-	case kintone.RadioButtonField:
-		return kintone.FT_RADIO
-	case kintone.SingleSelectField:
-		return kintone.FT_SINGLE_SELECT
-	case kintone.MultiSelectField:
-		return kintone.FT_MULTI_SELECT
-	case kintone.FileField:
-		return kintone.FT_FILE
-	case kintone.LinkField:
-		return kintone.FT_LINK
-	case kintone.DateField:
-		return kintone.FT_DATE
-	case kintone.TimeField:
-		return kintone.FT_TIME
-	case kintone.DateTimeField:
-		return kintone.FT_DATETIME
-	case kintone.UserField:
-		return kintone.FT_USER
-	case kintone.OrganizationField:
-		return kintone.FT_ORGANIZATION
-	case kintone.GroupField:
-		return kintone.FT_GROUP
-	case kintone.CategoryField:
-		return kintone.FT_CATEGORY
-	case kintone.StatusField:
-		return kintone.FT_STATUS
-	case kintone.RecordNumberField:
-		return kintone.FT_RECNUM
-	case kintone.AssigneeField:
-		return kintone.FT_ASSIGNEE
-	case kintone.CreatorField:
-		return kintone.FT_CREATOR
-	case kintone.ModifierField:
-		return kintone.FT_MODIFIER
-	case kintone.CreationTimeField:
-		return kintone.FT_CTIME
-	case kintone.ModificationTimeField:
-		return kintone.FT_MTIME
-	case kintone.SubTableField:
-		return kintone.FT_SUBTABLE
+	records, err := app.GetRecords(nil, query)
+	if err != nil {
+		return err
 	}
-	return ""
+	checkNoRecord(records)
+	err = writeJSON(app, writer, records)
+
+	if len(records) == EXPORT_ROW_LIMIT {
+		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, row, hasTable)
+	}
+	return nil
 }
 
 func toString(f interface{}, delimiter string) string {

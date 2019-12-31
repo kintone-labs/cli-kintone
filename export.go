@@ -16,13 +16,12 @@ import (
 
 const (
 	SUBTABLE_ROW_PREFIX = "*"
-	RECORD_NOT_FOUND    = "No record found."
+	RECORD_NOT_FOUND    = "No record found. \nPlease check your query or permission settings."
 )
 
 func checkNoRecord(records []*kintone.Record) {
 	if len(records) < 1 {
 		fmt.Println(RECORD_NOT_FOUND)
-		fmt.Println("Please check your query or permission settings.")
 		os.Exit(1)
 	}
 }
@@ -127,12 +126,9 @@ func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
 	}
 
 	if config.Format == "json" {
-		fmt.Fprint(writer, "{\"records\": [\n")
 		err := writeRecordsBySeekMethodForJson(app, 0, writer, 0)
-		fmt.Fprint(writer, "\n]}")
 		return err
 	}
-	writeHeaderCsv(writer, hasTable, row)
 	return writeRecordsBySeekMethodForCsv(app, 0, writer, row, hasTable, 0)
 }
 
@@ -169,8 +165,6 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 		if err != nil {
 			return err
 		}
-
-		writeHeaderCsv(writer, hasTable, row)
 		_, err = writeRecordsCsv(app, writer, records, row, hasTable, 0)
 		if err != nil {
 			return err
@@ -196,24 +190,27 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 	if err != nil {
 		return err
 	}
-	fmt.Fprint(writer, "{\"records\": [\n")
 	index := uint64(0)
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
 		if err != nil {
 			return err
 		}
+		if index == 0 {
+			fmt.Fprint(writer, "{\"records\": [\n")
 
+		}
 		index, err = writeRecordsJSON(app, writer, recordsCursor.Records, index)
 		if err != nil {
 			return err
 		}
 
 		if !recordsCursor.Next {
+			fmt.Fprint(writer, "\n]}")
 			break
 		}
 	}
-	fmt.Fprint(writer, "\n]}")
+
 	return nil
 }
 
@@ -224,12 +221,10 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 	}
 
 	row, err := getRow(app)
-	hasTable := hasSubTable(row)
-
 	if err != nil {
 		return err
 	}
-	writeHeaderCsv(writer, hasTable, row)
+	hasTable := hasSubTable(row)
 	index := uint64(0)
 	for {
 		recordsCursor, err := getAllRecordsByCursor(app, cursor.Id)
@@ -492,6 +487,9 @@ func writeRecordsJSON(app *kintone.App, writer io.Writer, records []*kintone.Rec
 }
 
 func writeRecordsCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row Row, hasTable bool, i uint64) (uint64, error) {
+	if i == 0 {
+		writeHeaderCsv(writer, hasTable, row)
+	}
 	for _, record := range records {
 		rowID := record.Id()
 		if rowID == 0 {
@@ -590,6 +588,9 @@ func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writ
 	if err != nil {
 		return err
 	}
+	if index == 0 {
+		fmt.Fprint(writer, "{\"records\": [\n")
+	}
 	index, err = writeRecordsJSON(app, writer, records, index)
 	if err != nil {
 		return err
@@ -597,6 +598,7 @@ func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writ
 	if len(records) == EXPORT_ROW_LIMIT {
 		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, index)
 	}
+	fmt.Fprint(writer, "\n]}")
 	return nil
 }
 

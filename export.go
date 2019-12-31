@@ -198,7 +198,6 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 		}
 		if index == 0 {
 			fmt.Fprint(writer, "{\"records\": [\n")
-
 		}
 		index, err = writeRecordsJSON(app, writer, recordsCursor.Records, index)
 		if err != nil {

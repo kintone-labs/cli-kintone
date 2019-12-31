@@ -27,14 +27,12 @@ func checkNoRecord(records []*kintone.Record) {
 	}
 }
 
-func createRow(app *kintone.App) (Row, bool, error) {
+func getRow(app *kintone.App) (Row, error) {
 	var row Row
-	hasTable := false
-
 	// retrieve field list
 	fields, err := getFields(app)
 	if err != nil {
-		return row, hasTable, err
+		return row, err
 	}
 
 	if config.Fields == nil {
@@ -43,8 +41,7 @@ func createRow(app *kintone.App) (Row, bool, error) {
 		row = makePartialRow(fields, config.Fields)
 	}
 
-	hasTable = hasSubTable(row)
-	return row, hasTable, err
+	return row, err
 
 }
 
@@ -109,7 +106,8 @@ func escapeCol(s string) string {
 }
 
 func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer) error {
-	row, hasTable, err := createRow(app)
+	row, err := getRow(app)
+	hasTable := hasSubTable(row)
 	if err != nil {
 		return err
 	}
@@ -148,7 +146,9 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 		_, err = writeRecordsJSON(app, writer, records, 0)
 		fmt.Fprint(writer, "\n]}")
 	} else {
-		row, hasTable, err := createRow(app)
+		row, err := getRow(app)
+		hasTable := hasSubTable(row)
+
 		if err != nil {
 			return err
 		}
@@ -206,7 +206,9 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		return err
 	}
 
-	row, hasTable, err := createRow(app)
+	row, err := getRow(app)
+	hasTable := hasSubTable(row)
+
 	if err != nil {
 		return err
 	}

@@ -236,7 +236,6 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		if err != nil {
 			return err
 		}
-		checkNoRecord(recordsCursor.Records)
 		index, err = writeRecordsCsv(app, writer, recordsCursor.Records, row, hasTable, index)
 		if err != nil {
 			return err
@@ -573,6 +572,9 @@ func writeRecordsCsv(app *kintone.App, writer io.Writer, records []*kintone.Reco
 
 func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool, index uint64) error {
 	records, err := getRecordsForSeekMethod(app, id)
+	if err != nil {
+		return err
+	}
 	index, err = writeRecordsCsv(app, writer, records, row, hasTable, index)
 	if err != nil {
 		return err
@@ -585,6 +587,9 @@ func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Write
 
 func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, index uint64) error {
 	records, err := getRecordsForSeekMethod(app, id)
+	if err != nil {
+		return err
+	}
 	index, err = writeRecordsJSON(app, writer, records, index)
 	if err != nil {
 		return err

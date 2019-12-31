@@ -53,6 +53,7 @@ type Configure struct {
 var config Configure
 
 // Column config
+// Column config is deprecated, replace using Cell config
 type Column struct {
 	Code       string
 	Type       string
@@ -61,6 +62,7 @@ type Column struct {
 }
 
 // Columns config
+// Columns config is deprecated, replace using Row config
 type Columns []*Column
 
 // Cell config
@@ -108,6 +110,7 @@ func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 }
 
 // set column information from fieldinfo
+// This function is deprecated, replace using function getCell
 func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	// initialize values
 	column := Column{Code: code, IsSubField: false, Table: ""}

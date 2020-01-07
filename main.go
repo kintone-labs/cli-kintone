@@ -284,7 +284,7 @@ func main() {
 			if config.Query != "" {
 				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = exportRecordsBySeekMethod(app, writer)
+				err = exportRecordsBySeekMethod(app, writer, config.Fields)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -311,7 +311,7 @@ func main() {
 		if config.Query != "" {
 			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = exportRecordsBySeekMethod(app, writer)
+			err = exportRecordsBySeekMethod(app, writer, config.Fields)
 		}
 	}
 	if err != nil {

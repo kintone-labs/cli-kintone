@@ -53,6 +53,7 @@ type Configure struct {
 var config Configure
 
 // Column config
+// Column config is deprecated, replace using Cell config
 type Column struct {
 	Code       string
 	Type       string
@@ -61,7 +62,19 @@ type Column struct {
 }
 
 // Columns config
+// Columns config is deprecated, replace using Row config
 type Columns []*Column
+
+// Cell config
+type Cell struct {
+	Code       string
+	Type       string
+	IsSubField bool
+	Table      string
+}
+
+// Row config
+type Row []*Cell
 
 func (p Columns) Len() int {
 	return len(p)
@@ -97,6 +110,7 @@ func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 }
 
 // set column information from fieldinfo
+// This function is deprecated, replace using function getCell
 func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	// initialize values
 	column := Column{Code: code, IsSubField: false, Table: ""}
@@ -130,6 +144,43 @@ func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	// the code is not found
 	column.Type = "UNKNOWN"
 	return &column
+}
+
+// set Cell information from fieldinfo
+// function replace getColumn so getColumn is invalid name
+func getCell(code string, fields map[string]*kintone.FieldInfo) *Cell {
+	// initialize values
+	cell := Cell{Code: code, IsSubField: false, Table: ""}
+
+	if code == "$id" {
+		cell.Type = kintone.FT_ID
+		return &cell
+	} else if code == "$revision" {
+		cell.Type = kintone.FT_REVISION
+		return &cell
+	} else {
+		// is this code the one of sub field?
+		for _, val := range fields {
+			if val.Code == code {
+				cell.Type = val.Type
+				return &cell
+			}
+			if val.Type == kintone.FT_SUBTABLE {
+				for _, subField := range val.Fields {
+					if subField.Code == code {
+						cell.IsSubField = true
+						cell.Type = subField.Type
+						cell.Table = val.Code
+						return &cell
+					}
+				}
+			}
+		}
+	}
+
+	// the code is not found
+	cell.Type = "UNKNOWN"
+	return &cell
 }
 
 func getEncoding() encoding.Encoding {
@@ -229,10 +280,11 @@ func main() {
 	// Old logic without force import/export
 	if config.IsImport == false && config.IsExport == false {
 		if config.FilePath == "" {
-			if config.Format == "json" {
-				err = writeJSON(app, os.Stdout)
+			writer := getWriter(os.Stdout)
+			if config.Query != "" {
+				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = writeCsv(app, os.Stdout)
+				err = exportRecordsBySeekMethod(app, writer, config.Fields)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -255,10 +307,11 @@ func main() {
 		if config.FilePath != "" {
 			log.Fatal("The -f option is not supported with the --export option.")
 		}
-		if config.Format == "json" {
-			err = writeJSON(app, os.Stdout)
+		writer := getWriter(os.Stdout)
+		if config.Query != "" {
+			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = writeCsv(app, os.Stdout)
+			err = exportRecordsBySeekMethod(app, writer, config.Fields)
 		}
 	}
 	if err != nil {

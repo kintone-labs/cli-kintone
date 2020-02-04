@@ -20,11 +20,11 @@ Step 1: Creating folder to develop
     $ mkdir -p /usr/local/dev-cli-kintone/src
     Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
 
-Step 2: Create variable environment GOPATH 
+Step 2: Creating variable environment GOPATH
 
     $ export GOPATH=/usr/local/dev-cli-kintone
 
-Step 3: Setting the source code
+Step 3: Getting cli-kintone repository
 
     $ cd ${GOPATH}/src
     $ git clone https://github.com/kintone/cli-kintone.git
@@ -33,10 +33,10 @@ Step 4: Install dependencies
 
     $ cd ${GOPATH}/src/cli-kintone
     $ go get github.com/mattn/gom
-    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom come directory /usr/local/ to use
+    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
     $ gom -production install
 
-build
+Step 5: Build
 
     $ cd ${GOPATH}/src/cli-kintone
     $ sudo mv vendor/ src

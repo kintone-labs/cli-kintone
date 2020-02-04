@@ -16,9 +16,8 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 
 Step 1: Creating folder to develop
-    ```
+
     $ mkdir -p /usr/local/dev-cli-kintone/src
-    ```
     Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
 
 Step 2: Create variable environment GOPATH 
@@ -34,7 +33,7 @@ Step 4: Install dependencies
 
     $ cd ${GOPATH}/src/cli-kintone
     $ go get github.com/mattn/gom
-    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom #Link package gom come directory /usr/local/ to use
+    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom come directory /usr/local/ to use
     $ gom -production install
 
 build

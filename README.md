@@ -15,34 +15,38 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 - Git and Mercurial to be able to clone the packages
 
 
-Step 1: Creating folder to develop
+### Step 1: Creating folder to develop
 ```
-$ mkdir -p /usr/local/dev-cli-kintone/src
+mkdir -p /usr/local/dev-cli-kintone/src
 ```
 Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
 
-Step 2: Creating variable environment GOPATH
+### Step 2: Creating variable environment GOPATH
 
-    $ export GOPATH=/usr/local/dev-cli-kintone
+```
+export GOPATH=/usr/local/dev-cli-kintone
+```
 
-Step 3: Getting cli-kintone repository
+### Step 3: Getting cli-kintone repository
+```
+cd ${GOPATH}/src
+git clone https://github.com/kintone/cli-kintone.git
+```
 
-    $ cd ${GOPATH}/src
-    $ git clone https://github.com/kintone/cli-kintone.git
+### Step 4: Install dependencies
+```
+cd ${GOPATH}/src/cli-kintone
+go get github.com/mattn/gom
+sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
+gom -production install
+```
 
-Step 4: Install dependencies
-
-    $ cd ${GOPATH}/src/cli-kintone
-    $ go get github.com/mattn/gom
-    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
-    $ gom -production install
-
-Step 5: Build
-
-    $ cd ${GOPATH}/src/cli-kintone
-    $ sudo mv vendor/ src
-    $ gom build
-
+### Step 5: Build
+```
+cd ${GOPATH}/src/cli-kintone
+sudo mv vendor/ src
+gom build
+```
 ## Downloads
 
 These binaries are available for download.
@@ -86,17 +90,17 @@ https://github.com/kintone/cli-kintone/releases
 ## Examples
 
 ### Export all columns from an app
-
-    $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
-
+```
+cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+```
 ### Export the specified columns to csv file as Shif-JIS encoding
-
-    $ cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
-
+```
+cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
+```
 ### Import specified file into an App
-
-    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
-
+```
+cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+```
 Records are updated and/or added if the import file contains either an $id column (that represents the Record Number field), or a column representing a key field (denoted with a * symbol before the field code name, such as "\*mykeyfield").  
 
 If the value in the $id (or key field) column matches a record number value, that record will be updated.  
@@ -105,27 +109,27 @@ If the value in the $id (or key field) column does not match with any record num
 If an $id (or key field) column does not exist in the file, new records will be added, and no records will be updated.
 
 ### Export and download attachment files to ./mydownloads directory
-
-    $ cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
-
+```
+cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
+```
 ### Import and upload attachment files from ./myuploads directory
-
-    $ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
-
+```
+cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
+```
 ### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
-
-    $ cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
-
+```
+cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+```
 ### Import CSV from line 25 of the input file
-
-     $ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
-
+```
+cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
+```
 ### Import from standard input (stdin)
-
-     $ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
-
+```
+printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+```
 ## Documents for Basic Usage
 English: https://developer.kintone.io/hc/en-us/articles/115002614853  
 Japanese: https://developer.cybozu.io/hc/ja/articles/202957070

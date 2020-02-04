@@ -14,17 +14,27 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 - Go 1.13.3
 - Git and Mercurial to be able to clone the packages
 
-Getting the source code
 
-    $ export GOPATH=/path/to/your/Go/project/folder
+Step 1: Creating folder to develop
+    ```
+    $ mkdir -p /usr/local/dev-cli-kintone/src
+    ```
+    Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
+
+Step 2: Create variable environment GOPATH 
+
+    $ export GOPATH=/usr/local/dev-cli-kintone
+
+Step 3: Setting the source code
+
     $ cd ${GOPATH}/src
     $ git clone https://github.com/kintone/cli-kintone.git
 
-Install dependencies
+Step 4: Install dependencies
 
     $ cd ${GOPATH}/src/cli-kintone
     $ go get github.com/mattn/gom
-    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom
+    $ sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom #Link package gom come directory /usr/local/ to use
     $ gom -production install
 
 build

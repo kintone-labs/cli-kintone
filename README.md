@@ -16,9 +16,10 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 
 Step 1: Creating folder to develop
-
-    $ mkdir -p /usr/local/dev-cli-kintone/src
-    Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
+```
+$ mkdir -p /usr/local/dev-cli-kintone/src
+```
+Note: "/usr/local/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
 
 Step 2: Creating variable environment GOPATH
 

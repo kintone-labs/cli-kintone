@@ -44,7 +44,7 @@ gom -production install
 ### Step 5: Build
 ```
 cd ${GOPATH}/src/cli-kintone
-sudo mv vendor/ src
+mv vendor/ src
 gom build
 ```
 ## Downloads

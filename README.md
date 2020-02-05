@@ -91,15 +91,15 @@ https://github.com/kintone/cli-kintone/releases
 
 ### Export all columns from an app
 ```
-cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
 ### Export the specified columns to csv file as Shif-JIS encoding
 ```
-cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
+./cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 ```
 ### Import specified file into an App
 ```
-cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
 Records are updated and/or added if the import file contains either an $id column (that represents the Record Number field), or a column representing a key field (denoted with a * symbol before the field code name, such as "\*mykeyfield").  
 
@@ -110,21 +110,21 @@ If an $id (or key field) column does not exist in the file, new records will be 
 
 ### Export and download attachment files to ./mydownloads directory
 ```
-cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
+./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 ```
 ### Import and upload attachment files from ./myuploads directory
 ```
-cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
+./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```
 ### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
 ```
-cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
 ### Import CSV from line 25 of the input file
 ```
-cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
+./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 ```
 ### Import from standard input (stdin)
 ```

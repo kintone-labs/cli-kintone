@@ -24,7 +24,7 @@ Note: "/tmp/dev-cli-kintone" is path to project at local, can be changed match w
 ### Step 2: Creating variable environment GOPATH
 
 ```
-export GOPATH=/tmp/local/dev-cli-kintone
+export GOPATH=/tmp/dev-cli-kintone
 ```
 
 ### Step 3: Getting cli-kintone repository

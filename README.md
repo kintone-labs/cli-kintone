@@ -14,7 +14,7 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 - Go 1.13.3
 - Git and Mercurial to be able to clone the packages
 
-Mac OS X/Linux
+## Mac OS X/Linux
 ### Step 1: Creating folder to develop
 ```
 mkdir -p /tmp/dev-cli-kintone/src
@@ -48,12 +48,12 @@ mv vendor/ src
 gom build
 ```
 
-Windows
+## Windows
 ### Step 1: Creating folder to develop
 ```
-mkdir -p \tmp\dev-cli-kintone\src
+mkdir -p c:\tmp\dev-cli-kintone\src
 ```
-Note: "\tmp\dev-cli-kintone" is path to project at local, can be changed match with project local of you.
+Note: "c:\tmp\dev-cli-kintone" is path to project at local, can be changed match with project local of you.
 
 ### Step 2: Creating variable environment GOPATH
 

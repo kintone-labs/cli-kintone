@@ -71,13 +71,13 @@ git clone https://github.com/kintone/cli-kintone.git
 ```
 cd %GOPATH%\src\cli-kintone
 go get github.com/mattn/gom
-gom -production install
+../../bin/gom.exe -production install
 ```
 
 ### Step 5: Build
 ```
 cd %GOPATH%\src\cli-kintone
-gom build
+../../bin/gom.exe build
 ```
 
 ## Downloads

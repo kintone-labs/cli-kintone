@@ -123,18 +123,34 @@ https://github.com/kintone/cli-kintone/releases
 ## Examples
 
 ### Export all columns from an app
+Mac Os/Linux
 ```
 ./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
+Window
+```
+cli-kintone.exe -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+```
 ### Export the specified columns to csv file as Shif-JIS encoding
+Mac Os/Linux
 ```
 ./cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 ```
+Window
+```
+cli-kintone.exe -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
+```
 ### Import specified file into an App
+Mac Os/Linux
 ```
 ./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
-Records are updated and/or added if the import file contains either an $id column (that represents the Record Number field), or a column representing a key field (denoted with a * symbol before the field code name, such as "\*mykeyfield").  
+Window
+```
+cli-kintone.exe --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+```
+
+Records are updated and/or added if the import file contains either an $id column (that represents the Record Number field), or a column representing a key field (denoted with a * symbol before the field code name, such as "\*mykeyfield").  
 
 If the value in the $id (or key field) column matches a record number value, that record will be updated.  
 If the value in the $id (or key field) column is empty, a new record will be added.  
@@ -142,22 +158,42 @@ If the value in the $id (or key field) column does not match with any record num
 If an $id (or key field) column does not exist in the file, new records will be added, and no records will be updated.
 
 ### Export and download attachment files to ./mydownloads directory
+Mac Os/Linux
 ```
 ./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 ```
+Window
+```
+cli-kintone.exe -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
+```
 ### Import and upload attachment files from ./myuploads directory
+Mac Os/Linux
 ```
 ./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
+```
+Window
+```
+cli-kintone.exe --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```
 ### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
+Mac Os/Linux
 ```
 ./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
+Window
+```
+cli-kintone.exe --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+```
 ### Import CSV from line 25 of the input file
+Mac Os/Linux
 ```
 ./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
+```
+Window
+```
+cli-kintone.exe --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 ```
 ### Import from standard input (stdin)
 ```

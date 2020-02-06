@@ -178,6 +178,7 @@ cli-kintone.exe --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <I
 ### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
+
 Mac OS X/Linux
 ```
 ./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>

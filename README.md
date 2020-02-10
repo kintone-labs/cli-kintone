@@ -14,69 +14,68 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 - Go 1.13.3
 - Git and Mercurial to be able to clone the packages
 
-## Mac OS X/Linux
-### Step 1: Creating folder to develop
+### Mac OS X/Linux
+#### Step 1: Creating folder to develop
 ```
 mkdir -p /tmp/dev-cli-kintone/src
 ```
-Note: "/tmp/dev-cli-kintone" is path to project at local, can be changed match with project local of you.
+Note:  "/tmp/dev-cli-kintone" is the path to project at local, can be changed to match with the project at local of you.
 
-### Step 2: Creating variable environment GOPATH
+#### Step 2: Creating variable environment GOPATH
 
 ```
 export GOPATH=/tmp/dev-cli-kintone
 ```
 
-### Step 3: Getting cli-kintone repository
+#### Step 3: Getting cli-kintone repository
 ```
 cd ${GOPATH}/src
 git clone https://github.com/kintone/cli-kintone.git
 ```
 
-### Step 4: Install dependencies
+#### Step 4: Install dependencies
 ```
 cd ${GOPATH}/src/cli-kintone
 go get github.com/mattn/gom
-sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
+sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom 
+Note: Link package gom to directory "/usr/local/" to use globally
 gom -production install
 ```
 
-### Step 5: Build
+#### Step 5: Build
 ```
-cd ${GOPATH}/src/cli-kintone
 mv vendor/ src
 gom build
 ```
 
-## Windows
-### Step 1: Creating folder to develop
+### Windows
+#### Step 1: Creating folder to develop
 ```
 mkdir -p c:\tmp\dev-cli-kintone\src
 ```
-Note: "c:\tmp\dev-cli-kintone" is path to project at local, can be changed match with project local of you.
+Note: "c:\tmp\dev-cli-kintone" is the path to project at local, can be changed to match with the project at local of you.
 
-### Step 2: Creating variable environment GOPATH
+#### Step 2: Creating variable environment GOPATH
 
 ```
 set GOPATH=c:\tmp\dev-cli-kintone
 ```
 
-### Step 3: Getting cli-kintone repository
+#### Step 3: Getting cli-kintone repository
 ```
 cd %GOPATH%\src
 git clone https://github.com/kintone/cli-kintone.git
 ```
 
-### Step 4: Install dependencies
+#### Step 4: Install dependencies
 ```
 cd %GOPATH%\src\cli-kintone
 go get github.com/mattn/gom
 ..\..\bin\gom.exe -production install
 ```
 
-### Step 5: Build
+#### Step 5: Build
 ```
-cd %GOPATH%\src\cli-kintone
 ..\..\bin\gom.exe build
 ```
 
@@ -121,35 +120,22 @@ https://github.com/kintone/cli-kintone/releases
         -h, --help    Show this help message
 ```
 ## Examples
+Note: 
+If you use Windows device, please specify cli-kintone.exe
+Please set the PATH to cli-kintone to match your local environment beforehand.
 
 ### Export all columns from an app
-Mac OS X/Linux
 ```
-./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN>
-```
-Window
-```
-cli-kintone.exe -a <APP_ID> -d <FQDN> -t <API_TOKEN>
+cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
 ### Export the specified columns to csv file as Shif-JIS encoding
-Mac OS X/Linux
 ```
-./cli-kintone -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
-```
-Window
-```
-cli-kintone.exe -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
+cli-kintone --export -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 ```
 ### Import specified file into an App
-Mac OS X/Linux
 ```
-./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
-Window
-```
-cli-kintone.exe --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
-```
-
 Records are updated and/or added if the import file contains either an $id column (that represents the Record Number field), or a column representing a key field (denoted with a * symbol before the field code name, such as "\*mykeyfield").  
 
 If the value in the $id (or key field) column matches a record number value, that record will be updated.  
@@ -158,43 +144,23 @@ If the value in the $id (or key field) column does not match with any record num
 If an $id (or key field) column does not exist in the file, new records will be added, and no records will be updated.
 
 ### Export and download attachment files to ./mydownloads directory
-Mac OS X/Linux
 ```
-./cli-kintone -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
-```
-Window
-```
-cli-kintone.exe -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
+cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 ```
 ### Import and upload attachment files from ./myuploads directory
-Mac OS X/Linux
 ```
-./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
-```
-Window
-```
-cli-kintone.exe --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
+cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```
 ### Import and update by selecting a key to bulk update
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
 
-Mac OS X/Linux
 ```
-./cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
-```
-Window
-```
-cli-kintone.exe --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
+cli-kintone --import -a <APP_ID> -d <FQDN> -e sjis -t <API_TOKEN> -f <INPUT_FILE>
 ```
 ### Import CSV from line 25 of the input file
-Mac OS X/Linux
 ```
-./cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
-```
-Window
-```
-cli-kintone.exe --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
+cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 ```
 ### Import from standard input (stdin)
 ```

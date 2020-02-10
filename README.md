@@ -121,8 +121,8 @@ https://github.com/kintone/cli-kintone/releases
 ```
 ## Examples
 Note: 
-If you use Windows device, please specify cli-kintone.exe
-Please set the PATH to cli-kintone to match your local environment beforehand.
+* If you use Windows device, please specify cli-kintone.exe
+* Please set the PATH to cli-kintone to match your local environment beforehand.
 
 ### Export all columns from an app
 ```

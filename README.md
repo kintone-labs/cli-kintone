@@ -102,8 +102,8 @@ https://github.com/kintone/cli-kintone/releases
         -t=           API token
         -g=           Guest Space ID (default: 0)
         -o=           Output format. Specify either 'json' or 'csv' (default: csv)
-        -e=           Character encoding. Specify one of the following -> 'utf-8'(default), 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or
-                        'euc-jp' (default: utf-8)
+        -e=           Character encoding (default: utf-8). Only support the encoding below both field code and data itself:  
+                        'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or'euc-jp'
         -U=           Basic authentication user name
         -P=           Basic authentication password
         -q=           Query string

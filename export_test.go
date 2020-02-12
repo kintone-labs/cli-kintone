@@ -45,15 +45,47 @@ func makeTestData(app *kintone.App) error {
 	return err
 }
 
+func TestSeekMethod(t *testing.T) {
+	app := newApp()
+	config.Query = ""
+	_, err := getRecordsForSeekMethod(app, 0)
+	if err != nil {
+		t.Error("TestSeekMethod is failed:", err)
+	}
+
+}
+
+func TestGetRecordsHaveLimitOffset(t *testing.T) {
+	app := newApp()
+	buf := &bytes.Buffer{}
+	config.Query = "limit 100 offset 0"
+	err := exportRecords(app, nil, buf)
+	if err != nil {
+		t.Error("TestGetRecordsHaveLimitOffset is failed:", err)
+	}
+
+}
+
+func TestGetRecordsHaveQuery(t *testing.T) {
+	app := newApp()
+	buf := &bytes.Buffer{}
+	config.Query = "order by $id desc"
+	err := exportRecordsByCursor(app, nil, buf)
+	if err != nil {
+		t.Error("TestGetRecordsHaveQuery is failed:", err)
+	}
+}
+
 func TestExport1(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	app := newApp()
 	makeTestData(app)
 
-	config.Fields = []string{"single_line_text", "multi_line_text", "number"}
+	fields := []string{"single_line_text", "multi_line_text", "number"}
 	config.Query = "order by record_number asc"
-	err := writeCsv(app, buf)
+
+	err := exportRecords(app, fields, buf)
 	if err != nil {
 		t.Error(err)
 	}
@@ -119,9 +151,8 @@ func TestExport2(t *testing.T) {
 	app := newApp()
 	makeTestData(app)
 
-	config.Fields = []string{"single_line_text", "multi_line_text", "number", "table"}
 	config.Query = "order by record_number asc"
-	err := writeCsv(app, buf)
+	err := exportRecords(app, nil, buf)
 	if err != nil {
 		t.Error(err)
 	}

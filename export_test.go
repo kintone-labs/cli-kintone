@@ -48,7 +48,7 @@ func makeTestData(app *kintone.App) error {
 func TestSeekMethod(t *testing.T) {
 	app := newApp()
 	config.Query = ""
-	_, err := getRecordsForSeekMethod(app, 0)
+	_, err := getRecordsForSeekMethod(app, 0, nil, true)
 	if err != nil {
 		t.Error("TestSeekMethod is failed:", err)
 	}

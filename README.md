@@ -37,8 +37,7 @@ git clone https://github.com/kintone/cli-kintone.git
 ```
 cd ${GOPATH}/src/cli-kintone
 go get github.com/mattn/gom
-sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom 
-Note: Link package gom to directory "/usr/local/" to use globally
+sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
 gom -production install
 ```
 

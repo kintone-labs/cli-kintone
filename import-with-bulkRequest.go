@@ -106,8 +106,8 @@ func addSubField(app *kintone.App, column *Column, col string, table *SubRecord)
 	return nil
 }
 func importFromCSV(app *kintone.App, _reader io.Reader) error {
-
-	reader := csv.NewReader(getReader(_reader))
+	readerWithoutBOM := removeBOMCharacter(_reader)
+	reader := csv.NewReader(getReader(readerWithoutBOM))
 
 	head := true
 	var columns Columns

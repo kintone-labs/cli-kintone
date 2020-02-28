@@ -10,8 +10,10 @@ import (
 	"github.com/howeyc/gopass"
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -196,6 +198,10 @@ func getEncoding() encoding.Encoding {
 		return japanese.EUCJP
 	case "sjis":
 		return japanese.ShiftJIS
+	case "gbk":
+		return simplifiedchinese.GBK
+	case "big5":
+		return traditionalchinese.Big5
 	default:
 		return nil
 	}

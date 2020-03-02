@@ -39,7 +39,7 @@ type Configure struct {
 	APIToken          string   `short:"t" default:"" description:"API token"`
 	GuestSpaceID      uint64   `short:"g" default:"0" description:"Guest Space ID"`
 	Format            string   `short:"o" default:"csv" description:"Output format. Specify either 'json' or 'csv'"`
-	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding (default: utf-8).\n Only support the encoding below both field code and data itself: \n 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'"`
+	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding (default: utf-8).\n Only support the encoding below both field code and data itself: \n 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp', 'gbk' or 'big5'"`
 	BasicAuthUser     string   `short:"U" default:"" description:"Basic authentication user name"`
 	BasicAuthPassword string   `short:"P" default:"" description:"Basic authentication password"`
 	Query             string   `short:"q" default:"" description:"Query string"`

@@ -79,31 +79,6 @@ type Cell struct {
 // Row config
 type Row []*Cell
 
-func (p Columns) Len() int {
-	return len(p)
-}
-
-func (p Columns) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
-func (p Columns) Less(i, j int) bool {
-	p1 := p[i]
-	code1 := p1.Code
-	if p1.IsSubField {
-		code1 = p1.Table
-	}
-	p2 := p[j]
-	code2 := p2.Code
-	if p2.IsSubField {
-		code2 = p2.Table
-	}
-	if code1 == code2 {
-		return p[i].Code < p[j].Code
-	}
-	return code1 < code2
-}
-
 func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 	fields, err := app.Fields()
 	if err != nil {

@@ -30,6 +30,8 @@ const EXPORT_ROW_LIMIT = 500
 
 // Configure of this package
 type Configure struct {
+	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
+	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
 	Domain            string   `short:"d" default:"" description:"Domain name (specify the FQDN)"`
 	AppID             uint64   `short:"a" default:"0" description:"App ID"`
 	Login             string   `short:"u" default:"" description:"User's log in name"`
@@ -46,8 +48,6 @@ type Configure struct {
 	FileDir           string   `short:"b" default:"" description:"Attachment file directory"`
 	DeleteAll         bool     `short:"D" description:"Delete records before insert. You can specify the deleting record condition by option \"-q\""`
 	Line              uint64   `short:"l" default:"1" description:"Position index of data in the input file"`
-	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
-	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
 	Version           bool     `short:"v" long:"version" description:"Version of cli-kintone"`
 }
 

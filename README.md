@@ -7,7 +7,6 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 0.10.2
 
-
 ## Downloads
 
 These binaries are available for download.
@@ -35,7 +34,7 @@ https://github.com/kintone/cli-kintone/releases
         -o=           Output format. Specify either 'json' or 'csv' (default: csv)
         -e=           Character encoding (default: utf-8).
                         Only support the encoding below both field code and data itself:  
-                        'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or'euc-jp'
+                        'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or'euc-jp', 'gbk' or 'big5'
         -U=           Basic authentication user name
         -P=           Basic authentication password
         -q=           Query string

@@ -7,76 +7,6 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 0.10.2
 
-## How to Build
-
-### Requirement
-
-- Go 1.13.3
-- Git and Mercurial to be able to clone the packages
-
-### Mac OS X/Linux
-#### Step 1: Creating folder to develop
-```
-mkdir -p /tmp/dev-cli-kintone/src
-```
-Note:  "/tmp/dev-cli-kintone" is the path to project at local, can be changed to match with the project at local of you.
-
-#### Step 2: Creating variable environment GOPATH
-
-```
-export GOPATH=/tmp/dev-cli-kintone
-```
-
-#### Step 3: Getting cli-kintone repository
-```
-cd ${GOPATH}/src
-git clone https://github.com/kintone/cli-kintone.git
-```
-
-#### Step 4: Install dependencies
-```
-cd ${GOPATH}/src/cli-kintone
-go get github.com/mattn/gom
-sudo ln -s $GOPATH/bin/gom /usr/local/bin/gom # Link package gom to directory "/usr/local/" to use globally
-gom -production install
-```
-
-#### Step 5: Build
-```
-mv vendor/ src
-gom build
-```
-
-### Windows
-#### Step 1: Creating folder to develop
-```
-mkdir -p c:\tmp\dev-cli-kintone\src
-```
-Note: "c:\tmp\dev-cli-kintone" is the path to project at local, can be changed to match with the project at local of you.
-
-#### Step 2: Creating variable environment GOPATH
-
-```
-set GOPATH=c:\tmp\dev-cli-kintone
-```
-
-#### Step 3: Getting cli-kintone repository
-```
-cd %GOPATH%\src
-git clone https://github.com/kintone/cli-kintone.git
-```
-
-#### Step 4: Install dependencies
-```
-cd %GOPATH%\src\cli-kintone
-go get github.com/mattn/gom
-..\..\bin\gom.exe -production install
-```
-
-#### Step 5: Build
-```
-..\..\bin\gom.exe build
-```
 
 ## Downloads
 
@@ -166,9 +96,6 @@ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 ```
 printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
-## Documents for Basic Usage
-English: https://developer.kintone.io/hc/en-us/articles/115002614853  
-Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 ## Restriction
 * The limit of the file upload size is 10 MB.
@@ -176,6 +103,20 @@ Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 * The following record data cannot be retrieved: Category, Status, Field group.
 * The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
 
+## Documents for Basic Usage
+English: https://developer.kintone.io/hc/en-us/articles/115002614853  
+Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
+
+## How to Build
+
+### Requirement
+
+- Go 1.13.3
+- Git and Mercurial to be able to clone the packages
+
+### [Mac OS X/Linux](./docs/BuildForMacLinux.md)
+
+### [Windows](./docs/BuildForWindows.md)
 ## License
 
 GPL v2

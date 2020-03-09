@@ -24,6 +24,8 @@ https://github.com/kintone/cli-kintone/releases
         cli-kintone [OPTIONS]
 
     Application Options:
+            --import  Import data from stdin. If "-f" is also specified, data is imported from the file instead
+            --export  Export kintone data to stdout
         -d=           Domain name (specify the FQDN)
         -a=           App ID (default: 0)
         -u=           User's log in name
@@ -42,8 +44,6 @@ https://github.com/kintone/cli-kintone/releases
         -b=           Attachment file directory
         -D            Delete records before insert. You can specify the deleting record condition by option "-q"
         -l=           Position index of data in the input file (default: 1)
-            --import  Import data from stdin. If "-f" is also specified, data is imported from the file instead
-            --export  Export kintone data to stdout
         -v, --version Version of cli-kintone
 
     Help Options:
@@ -109,14 +109,15 @@ Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 ## How to Build
 
-### Requirement
+Requirement
 
 - Go 1.13.3
 - Git and Mercurial to be able to clone the packages
 
-### [Mac OS X/Linux](./docs/BuildForMacLinux.md)
+[Mac OS X/Linux](./docs/BuildForMacLinux.md)
 
-### [Windows](./docs/BuildForWindows.md)
+[Windows](./docs/BuildForWindows.md)
+
 ## License
 
 GPL v2

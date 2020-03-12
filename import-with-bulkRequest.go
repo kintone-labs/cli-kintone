@@ -23,11 +23,13 @@ type SubRecord struct {
 }
 
 func getReader(reader io.Reader) io.Reader {
+	readerWithoutBOM := removeBOMCharacter(reader)
+
 	encoding := getEncoding()
 	if encoding == nil {
-		return reader
+		return readerWithoutBOM
 	}
-	return transform.NewReader(reader, encoding.NewDecoder())
+	return transform.NewReader(readerWithoutBOM, encoding.NewDecoder())
 }
 
 // delete specific records

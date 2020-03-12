@@ -110,7 +110,7 @@ Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 Requirement
 
-- Go 1.13.3
+- Go 1.13.7
 - Git and Mercurial to be able to clone the packages
 
 [Mac OS X/Linux](./docs/BuildForMacLinux.md)

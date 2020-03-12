@@ -10,8 +10,10 @@ import (
 	"github.com/howeyc/gopass"
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/encoding/japanese"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/encoding/traditionalchinese"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -30,6 +32,8 @@ const EXPORT_ROW_LIMIT = 500
 
 // Configure of this package
 type Configure struct {
+	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
+	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
 	Domain            string   `short:"d" default:"" description:"Domain name (specify the FQDN)"`
 	AppID             uint64   `short:"a" default:"0" description:"App ID"`
 	Login             string   `short:"u" default:"" description:"User's log in name"`
@@ -37,7 +41,7 @@ type Configure struct {
 	APIToken          string   `short:"t" default:"" description:"API token"`
 	GuestSpaceID      uint64   `short:"g" default:"0" description:"Guest Space ID"`
 	Format            string   `short:"o" default:"csv" description:"Output format. Specify either 'json' or 'csv'"`
-	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding (default: utf-8).\n Only support the encoding below both field code and data itself: \n 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp'"`
+	Encoding          string   `short:"e" default:"utf-8" description:"Character encoding (default: utf-8).\n Only support the encoding below both field code and data itself: \n 'utf-8', 'utf-16', 'utf-16be-with-signature', 'utf-16le-with-signature', 'sjis' or 'euc-jp', 'gbk' or 'big5'"`
 	BasicAuthUser     string   `short:"U" default:"" description:"Basic authentication user name"`
 	BasicAuthPassword string   `short:"P" default:"" description:"Basic authentication password"`
 	Query             string   `short:"q" default:"" description:"Query string"`
@@ -46,8 +50,6 @@ type Configure struct {
 	FileDir           string   `short:"b" default:"" description:"Attachment file directory"`
 	DeleteAll         bool     `short:"D" description:"Delete records before insert. You can specify the deleting record condition by option \"-q\""`
 	Line              uint64   `short:"l" default:"1" description:"Position index of data in the input file"`
-	IsImport          bool     `long:"import" description:"Import data from stdin. If \"-f\" is also specified, data is imported from the file instead"`
-	IsExport          bool     `long:"export" description:"Export kintone data to stdout"`
 	Version           bool     `short:"v" long:"version" description:"Version of cli-kintone"`
 }
 
@@ -76,31 +78,6 @@ type Cell struct {
 
 // Row config
 type Row []*Cell
-
-func (p Columns) Len() int {
-	return len(p)
-}
-
-func (p Columns) Swap(i, j int) {
-	p[i], p[j] = p[j], p[i]
-}
-
-func (p Columns) Less(i, j int) bool {
-	p1 := p[i]
-	code1 := p1.Code
-	if p1.IsSubField {
-		code1 = p1.Table
-	}
-	p2 := p[j]
-	code2 := p2.Code
-	if p2.IsSubField {
-		code2 = p2.Table
-	}
-	if code1 == code2 {
-		return p[i].Code < p[j].Code
-	}
-	return code1 < code2
-}
 
 func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 	fields, err := app.Fields()
@@ -196,6 +173,10 @@ func getEncoding() encoding.Encoding {
 		return japanese.EUCJP
 	case "sjis":
 		return japanese.ShiftJIS
+	case "gbk":
+		return simplifiedchinese.GBK
+	case "big5":
+		return traditionalchinese.Big5
 	default:
 		return nil
 	}

@@ -101,10 +101,14 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
 * Client certificates cannot be used with cli-kintone.
 * The following record data cannot be retrieved: Category, Status, Field group.
 * The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
-* Windows command prompt may not display Chinese (Traditional/Simplified) data correctly when exporting with GBK or big5 encoding.  
+
+## Restriction of Encode/Decode
+* Windows command prompt may not display Chinese (Traditional/Simplified) data correctly like "譁�蟄怜喧縺�" when exporting with GBK, big5, utf-16, utf-16be-with-signature, utf-16le-with-signature, sjis or euc-jp encoding.  
 This is due to compatibility issues between Chinese characters and the Windows command prompt.  
 In this case, display the data by specifying UTF-8 encoding like below:  
-cli-kintone -d xxx -a xxx --export -e utf-8  
+```
+cli-kintone --export -a <APP_ID> -d <FQDN> -e utf-8  
+```
 *This issue only occurs when displaying data on Windows command prompt. Data import/export with other means work fine with GBK and big5 encoding.
 
 ## Documents for Basic Usage

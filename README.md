@@ -103,13 +103,16 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
 * The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
 
 ## Restriction of Encode/Decode
-* Windows command prompt may not display Chinese (Traditional/Simplified) data correctly like "譁�蟄怜喧縺�" when exporting with GBK, big5, utf-16, utf-16be-with-signature, utf-16le-with-signature, sjis or euc-jp encoding.  
-This is due to compatibility issues between Chinese characters and the Windows command prompt.  
-In this case, display the data by specifying UTF-8 encoding like below:  
-```
-cli-kintone --export -a <APP_ID> -d <FQDN> -e utf-8  
-```
-*This issue only occurs when displaying data on Windows command prompt. Data import/export with other means work fine with GBK and big5 encoding.
+* Windows command prompt may not display characters correctly like "譁�蟄怜喧縺�".  
+  This is due to compatibility issues between Chinese & Japanese characters and the Windows command prompt.
+  * Chinese (Traditional/Simplified): Display wrong even if exporting with gbk or big5 encoding.
+  * Japanese: Display wrong even if exporting with sjis or euc-jp encoding.
+  
+  In this case, display the data by specifying utf-8 encoding like below:
+  ```
+  cli-kintone --export -a <APP_ID> -d <FQDN> -e utf-8
+  ```
+  *This issue only occurs when displaying data on Windows command prompt. Data import/export with other means work fine with gbk, big5, sjis and euc-jp encoding.
 
 ## Documents for Basic Usage
 English: https://developer.kintone.io/hc/en-us/articles/115002614853  

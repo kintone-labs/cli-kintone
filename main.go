@@ -295,7 +295,11 @@ func main() {
 		if config.Query != "" {
 			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = exportRecordsBySeekMethod(app, writer, config.Fields)
+			fields := config.Fields
+			if len(config.Fields) > 0 {
+				fields = append(fields, "$id")
+			}
+			err = exportRecordsBySeekMethod(app, writer, fields)
 		}
 	}
 	if err != nil {

@@ -127,7 +127,7 @@ func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer, fields []stri
 	}
 
 	if config.Format == "json" {
-		err := writeRecordsBySeekMethodForJson(app, 0, writer, 0, fields, true)
+		err := writeRecordsBySeekMethodForJson(app, 0, writer, 0, fields, true, isAppendIdCustome)
 		return err
 	}
 	return writeRecordsBySeekMethodForCsv(app, 0, writer, row, hasTable, 0, fields, true, isAppendIdCustome)
@@ -154,7 +154,7 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 	checkNoRecord(records)
 	if config.Format == "json" {
 		fmt.Fprint(writer, "{\"records\": [\n")
-		_, err = writeRecordsJSON(app, writer, records, 0)
+		_, err = writeRecordsJSON(app, writer, records, 0, false)
 		if err != nil {
 			return err
 		}
@@ -200,7 +200,7 @@ func exportRecordsByCursorForJSON(app *kintone.App, fields []string, writer io.W
 		if index == 0 {
 			fmt.Fprint(writer, "{\"records\": [\n")
 		}
-		index, err = writeRecordsJSON(app, writer, recordsCursor.Records, index)
+		index, err = writeRecordsJSON(app, writer, recordsCursor.Records, index, false)
 		if err != nil {
 			return err
 		}
@@ -444,16 +444,20 @@ func writeHeaderCsv(writer io.Writer, hasTable bool, row Row) {
 	fmt.Fprint(writer, "\r\n")
 }
 
-func writeRecordsJSON(app *kintone.App, writer io.Writer, records []*kintone.Record, i uint64) (uint64, error) {
+func writeRecordsJSON(app *kintone.App, writer io.Writer, records []*kintone.Record, i uint64, isAppendIdCustome bool) (uint64, error) {
 	for _, record := range records {
 		if i > 0 {
 			fmt.Fprint(writer, ",\n")
+		}
+		rowID := record.Id()
+		if rowID == 0 || isAppendIdCustome {
+			rowID = i
 		}
 		// Download file to local folder that is the value of param -b
 		for fieldCode, fieldInfo := range record.Fields {
 			fieldType := reflect.TypeOf(fieldInfo).String()
 			if fieldType == "kintone.FileField" {
-				dir := fmt.Sprintf("%s-%d", fieldCode, record.Id())
+				dir := fmt.Sprintf("%s-%d", fieldCode, rowID)
 				err := downloadFile(app, fieldInfo, dir)
 				if err != nil {
 					return 0, err
@@ -464,7 +468,7 @@ func writeRecordsJSON(app *kintone.App, writer io.Writer, records []*kintone.Rec
 				for subTableIndex, subTableValue := range subTable {
 					for fieldCodeInSubTable, fieldValueInSubTable := range subTableValue.Fields {
 						if reflect.TypeOf(fieldValueInSubTable).String() == "kintone.FileField" {
-							dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, record.Id(), subTableIndex)
+							dir := fmt.Sprintf("%s-%d-%d", fieldCodeInSubTable, rowID, subTableIndex)
 							err := downloadFile(app, fieldValueInSubTable, dir)
 							if err != nil {
 								return 0, err
@@ -584,7 +588,7 @@ func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Write
 	return nil
 }
 
-func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, index uint64, fields []string, isRecordsNotFound bool) error {
+func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writer, index uint64, fields []string, isRecordsNotFound bool, isAppendIdCustome bool) error {
 	records, err := getRecordsForSeekMethod(app, id, fields, isRecordsNotFound)
 	if err != nil {
 		return err
@@ -592,13 +596,13 @@ func writeRecordsBySeekMethodForJson(app *kintone.App, id uint64, writer io.Writ
 	if index == 0 {
 		fmt.Fprint(writer, "{\"records\": [\n")
 	}
-	index, err = writeRecordsJSON(app, writer, records, index)
+	index, err = writeRecordsJSON(app, writer, records, index, isAppendIdCustome)
 	if err != nil {
 		return err
 	}
 	if len(records) == EXPORT_ROW_LIMIT {
 		isRecordsNotFound = false
-		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, index, fields, isRecordsNotFound)
+		return writeRecordsBySeekMethodForJson(app, records[len(records)-1].Id(), writer, index, fields, isRecordsNotFound, isAppendIdCustome)
 	}
 	fmt.Fprint(writer, "\n]}")
 	return nil

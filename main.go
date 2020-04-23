@@ -124,6 +124,15 @@ func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	return &column
 }
 
+func containtString(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
+}
+
 // set Cell information from fieldinfo
 // function replace getColumn so getColumn is invalid name
 func getCell(code string, fields map[string]*kintone.FieldInfo) *Cell {
@@ -270,7 +279,7 @@ func main() {
 			} else {
 				fields := config.Fields
 				isAppendIdCustome := false
-				if len(config.Fields) > 0 {
+				if len(config.Fields) > 0 && !containtString(config.Fields, "$id") {
 					fields = append(fields, "$id")
 					isAppendIdCustome = true
 				}
@@ -304,10 +313,9 @@ func main() {
 		} else {
 			fields := config.Fields
 			isAppendIdCustome := false
-			if len(config.Fields) > 0 {
+			if len(config.Fields) > 0 && !containtString(config.Fields, "$id") {
 				fields = append(fields, "$id")
 				isAppendIdCustome = true
-
 			}
 			err = exportRecordsBySeekMethod(app, writer, fields, isAppendIdCustome)
 		}

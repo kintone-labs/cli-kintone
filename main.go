@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"runtime"
+	"strings"
 
 	"github.com/howeyc/gopass"
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"
+	"golang.org/x/text/encoding/unicode"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -268,7 +268,11 @@ func main() {
 			if config.Query != "" {
 				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = exportRecordsBySeekMethod(app, writer, config.Fields)
+				fields := config.Fields
+				if len(config.Fields) > 0 {
+					fields = append(fields, "$id")
+				}
+				err = exportRecordsBySeekMethod(app, writer, fields)
 			}
 		} else {
 			err = importDataFromFile(app)

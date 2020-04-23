@@ -269,10 +269,13 @@ func main() {
 				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
 				fields := config.Fields
+				isAppendIdCustome := false
 				if len(config.Fields) > 0 {
 					fields = append(fields, "$id")
+					isAppendIdCustome = true
 				}
-				err = exportRecordsBySeekMethod(app, writer, fields)
+
+				err = exportRecordsBySeekMethod(app, writer, fields, isAppendIdCustome)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -300,10 +303,13 @@ func main() {
 			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
 			fields := config.Fields
+			isAppendIdCustome := false
 			if len(config.Fields) > 0 {
 				fields = append(fields, "$id")
+				isAppendIdCustome = true
+
 			}
-			err = exportRecordsBySeekMethod(app, writer, fields)
+			err = exportRecordsBySeekMethod(app, writer, fields, isAppendIdCustome)
 		}
 	}
 	if err != nil {

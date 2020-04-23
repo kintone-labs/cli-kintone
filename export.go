@@ -119,7 +119,7 @@ func escapeCol(s string) string {
 	return strings.Replace(s, "\"", "\"\"", -1)
 }
 
-func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer, fields []string) error {
+func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer, fields []string, isAppendIdCustome bool) error {
 	row, err := getRow(app)
 	hasTable := hasSubTable(row)
 	if err != nil {
@@ -130,7 +130,7 @@ func exportRecordsBySeekMethod(app *kintone.App, writer io.Writer, fields []stri
 		err := writeRecordsBySeekMethodForJson(app, 0, writer, 0, fields, true)
 		return err
 	}
-	return writeRecordsBySeekMethodForCsv(app, 0, writer, row, hasTable, 0, fields, true)
+	return writeRecordsBySeekMethodForCsv(app, 0, writer, row, hasTable, 0, fields, true, isAppendIdCustome)
 }
 
 func exportRecordsWithQuery(app *kintone.App, fields []string, writer io.Writer) error {
@@ -166,7 +166,7 @@ func exportRecords(app *kintone.App, fields []string, writer io.Writer) error {
 		if err != nil {
 			return err
 		}
-		_, err = writeRecordsCsv(app, writer, records, row, hasTable, 0)
+		_, err = writeRecordsCsv(app, writer, records, row, hasTable, 0, false)
 		if err != nil {
 			return err
 		}
@@ -231,7 +231,7 @@ func exportRecordsByCursorForCsv(app *kintone.App, fields []string, writer io.Wr
 		if err != nil {
 			return err
 		}
-		index, err = writeRecordsCsv(app, writer, recordsCursor.Records, row, hasTable, index)
+		index, err = writeRecordsCsv(app, writer, recordsCursor.Records, row, hasTable, index, false)
 		if err != nil {
 			return err
 		}
@@ -486,13 +486,13 @@ func writeRecordsJSON(app *kintone.App, writer io.Writer, records []*kintone.Rec
 	return i, nil
 }
 
-func writeRecordsCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row Row, hasTable bool, i uint64) (uint64, error) {
+func writeRecordsCsv(app *kintone.App, writer io.Writer, records []*kintone.Record, row Row, hasTable bool, i uint64, isAppendIdCustome bool) (uint64, error) {
 	if i == 0 {
 		writeHeaderCsv(writer, hasTable, row)
 	}
 	for _, record := range records {
 		rowID := record.Id()
-		if rowID == 0 {
+		if rowID == 0 || isAppendIdCustome {
 			rowID = i
 		}
 
@@ -568,18 +568,18 @@ func writeRecordsCsv(app *kintone.App, writer io.Writer, records []*kintone.Reco
 	return i, nil
 }
 
-func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool, index uint64, fields []string, isRecordFound bool) error {
+func writeRecordsBySeekMethodForCsv(app *kintone.App, id uint64, writer io.Writer, row Row, hasTable bool, index uint64, fields []string, isRecordFound bool, isAppendIdCustome bool) error {
 	records, err := getRecordsForSeekMethod(app, id, fields, isRecordFound)
 	if err != nil {
 		return err
 	}
-	index, err = writeRecordsCsv(app, writer, records, row, hasTable, index)
+	index, err = writeRecordsCsv(app, writer, records, row, hasTable, index, isAppendIdCustome)
 	if err != nil {
 		return err
 	}
 	if len(records) == EXPORT_ROW_LIMIT {
 		isRecordFound = false
-		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, row, hasTable, index, fields, isRecordFound)
+		return writeRecordsBySeekMethodForCsv(app, records[len(records)-1].Id(), writer, row, hasTable, index, fields, isRecordFound, isAppendIdCustome)
 	}
 	return nil
 }

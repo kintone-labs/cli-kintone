@@ -4,16 +4,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 	"runtime"
+	"strings"
 
 	"github.com/howeyc/gopass"
 	"github.com/kintone/go-kintone"
 	"golang.org/x/text/encoding"
-	"golang.org/x/text/encoding/unicode"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/encoding/traditionalchinese"
+	"golang.org/x/text/encoding/unicode"
 
 	flags "github.com/jessevdk/go-flags"
 )
@@ -122,6 +122,15 @@ func getColumn(code string, fields map[string]*kintone.FieldInfo) *Column {
 	// the code is not found
 	column.Type = "UNKNOWN"
 	return &column
+}
+
+func containtString(arr []string, str string) bool {
+	for _, a := range arr {
+		if a == str {
+			return true
+		}
+	}
+	return false
 }
 
 // set Cell information from fieldinfo
@@ -268,7 +277,14 @@ func main() {
 			if config.Query != "" {
 				err = exportRecordsWithQuery(app, config.Fields, writer)
 			} else {
-				err = exportRecordsBySeekMethod(app, writer, config.Fields)
+				fields := config.Fields
+				isAppendIdCustome := false
+				if len(config.Fields) > 0 && !containtString(config.Fields, "$id") {
+					fields = append(fields, "$id")
+					isAppendIdCustome = true
+				}
+
+				err = exportRecordsBySeekMethod(app, writer, fields, isAppendIdCustome)
 			}
 		} else {
 			err = importDataFromFile(app)
@@ -295,7 +311,13 @@ func main() {
 		if config.Query != "" {
 			err = exportRecordsWithQuery(app, config.Fields, writer)
 		} else {
-			err = exportRecordsBySeekMethod(app, writer, config.Fields)
+			fields := config.Fields
+			isAppendIdCustome := false
+			if len(config.Fields) > 0 && !containtString(config.Fields, "$id") {
+				fields = append(fields, "$id")
+				isAppendIdCustome = true
+			}
+			err = exportRecordsBySeekMethod(app, writer, fields, isAppendIdCustome)
 		}
 	}
 	if err != nil {

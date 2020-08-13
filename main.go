@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/howeyc/gopass"
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/simplifiedchinese"

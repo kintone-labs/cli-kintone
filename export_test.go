@@ -7,7 +7,7 @@ import (
 	"io"
 	"testing"
 
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 )
 
 func makeTestData(app *kintone.App) error {

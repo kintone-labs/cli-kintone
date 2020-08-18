@@ -29,7 +29,8 @@ script:
 
 deploy:
   provider: releases
-  api_key: ce8865fe000aa7824e161facd705b4e5c1e82e01
+  api_key: 
+    secure: "dqDCpfv4IUWH8lq9KknNkrKp1f4/ETqnFmY/EsJTvtgWCqBj5ZziEvLqEFbbokj/HFn19ZhZJa8emVQJyFYWkPE5x+S8VZraWH5mDJrMtto0ujAzR+dOyq5fydgvLSDNh2tflPHR4dD3gecvFq8mso98CNz/NWJfyxMPwVQ+bEcg1ghMsBFLIzZ95GFI/0dd1Vl01T/4DfD9LnaUdz/T8UCqf7ho0uWGiBswvmuDMm8USngj2DHdE5hWppn7gYevAhmUfil4/D4QEKd4Brz8P6qpzrxcOW9vSUF0ElV1+fA27cDEjUByTsO8wNrk2e9am9N2VOBErXAOhIP2qttGGaD/076sJoFkoHRez7kUp7lfmlOfUkoqxnwhNXQWkEgy6J7WrkCG6uFPXNtRpgEKPEf3zgcrkvWEfe2fb9651I3UpOmA3v8lPpg8YrQ9ozIndURVvgRTXZvXqzdntor3LiREbJHIVC974St7m6Plkt6DNKFfo6UKm6EvfaXsM+s1mkr3VO6TFTwnDcypSInf9G4nhphJwz/WWoFlaXp79y2e/pUMOSH5GXav0nEgmalngphYlUcHVXXVzyJJG+zR5sO5xdaQtHMRJkyvy3AT4dTvDhyN0PqDacZXiMqoF+3ZZiY6zABzepdshR9cYyxGXTbsq17kSybKmj1nzeNZW3Q="
   file:
     - "linux-x64.zip"
     - "macos-x64.zip"

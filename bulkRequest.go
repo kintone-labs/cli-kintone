@@ -16,7 +16,7 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 )
 
 const (

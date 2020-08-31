@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"os"
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 )
 
 func newAppTest(id uint64) *kintone.App {

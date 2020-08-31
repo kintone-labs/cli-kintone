@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 )
 
 func TestImport1(t *testing.T) {

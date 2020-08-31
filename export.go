@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 	"golang.org/x/text/transform"
 )
 

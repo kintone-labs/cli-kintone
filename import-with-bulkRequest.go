@@ -303,13 +303,17 @@ func setRecordUpdatable(record map[string]interface{}, columns Columns) {
 	}
 }
 func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
-	value = strings.TrimSpace(value)
-	if config.FileDir == "" || value == "" {
+	if config.FileDir == "" {
 		return nil, nil
 	}
 
-	files := strings.Split(value, "\n")
 	var ret kintone.FileField = []kintone.File{}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ret, nil
+	}
+
+	files := strings.Split(value, "\n")
 	for _, file := range files {
 		path := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, file)
 		fileKey, err := uploadFile(app, path)

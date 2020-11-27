@@ -77,6 +77,19 @@ If an $id (or key field) column does not exist in the file, new records will be 
 cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 ```
 ### Import and upload attachment files from ./myuploads directory
+> :warning: WARNING
+>- If the flag "-b" has NOT been specified, even though value of attachment fields in csv is empty or not, attachment fields will be skipped and not updated to kintone.
+>
+>- If the flag "-b" has been specified and value of attachment fields in csv is empty, the data of attachment fields after importing to kintone will be removed.
+>
+>Ex: CSV file to removed files in attachment fields
+>```
+>"$id","Name","Department","File"
+>"1","Adam Clark","Planning",""
+>"2","Sarah Jones","HR",""
+>```
+>&nbsp;
+
 ```
 cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```

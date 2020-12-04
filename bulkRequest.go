@@ -144,7 +144,7 @@ func (bulk *BulkRequests) ImportDataUpdate(app *kintone.App, recordData *kintone
 	bulkReqLength := len(bulk.Requests)
 
 	if bulkReqLength > ConstBulkRequestLimitRequest {
-		return errors.New("The length of bulk request was too large, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
+		return errors.New("The length of bulk request was too large, maximun is " + string(rune(ConstBulkRequestLimitRequest)) + " per request")
 	}
 	var dataPUT *DataRequestRecordsPUT
 	if bulkReqLength > 0 {
@@ -190,7 +190,7 @@ func (bulk *BulkRequests) ImportDataInsert(app *kintone.App, recordData *kintone
 	bulkReqLength := len(bulk.Requests)
 
 	if bulkReqLength > ConstBulkRequestLimitRequest {
-		return errors.New("The length of bulk request was too large, maximun is " + string(ConstBulkRequestLimitRequest) + " per request")
+		return errors.New("The length of bulk request was too large, maximun is " + string(rune(ConstBulkRequestLimitRequest)) + " per request")
 	}
 	var dataPOST *DataRequestRecordsPOST
 	if bulkReqLength > 0 {

@@ -3,7 +3,7 @@ cli-kintone
 
 cli-kintone is a command line utility for exporting and importing kintone App data.
 ```
-ⓘ This tool have been migrated from git://github.com/kintone/cli-kintone
+ⓘ This tool has been migrated from git://github.com/kintone/cli-kintone
 ```
 
 ## Version

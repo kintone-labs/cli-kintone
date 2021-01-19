@@ -60,7 +60,7 @@ Note:
 ```
 cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
-### Export the specified columns to csv file as Shif-JIS encoding
+### Export the specified columns to csv file as Shift-JIS encoding
 ```
 cli-kintone --export -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 ```

@@ -120,7 +120,7 @@ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
 
-## Restriction
+## Restrictions
 * The limit of the file upload size is 10 MB.
 * Client certificates cannot be used with cli-kintone.
 * The following record data cannot be retrieved: Category, Status, Field group.

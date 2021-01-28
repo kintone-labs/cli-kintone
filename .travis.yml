@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.15.5
+  - 1.15.7
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/mattn/gom

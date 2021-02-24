@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -315,7 +316,12 @@ func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
 
 	files := strings.Split(value, "\n")
 	for _, file := range files {
-		path := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, file)
+		var path string
+		if filepath.IsAbs(file) {
+			path = file
+		} else {
+			path = filepath.Join(config.FileDir, file)
+		}
 		fileKey, err := uploadFile(app, path)
 		if err != nil {
 			return nil, err

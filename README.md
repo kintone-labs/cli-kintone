@@ -105,6 +105,10 @@ cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```
 ### Import and update by selecting a key to bulk update
+> :warning: WARNING
+>
+>The error message `The "$id" field and update key fields cannot be specified together in CSV import file.` will be displayed when both "$id" and key fields are specified in CSV import file.
+
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
 

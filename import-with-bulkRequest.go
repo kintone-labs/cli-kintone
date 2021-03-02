@@ -183,6 +183,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			var id uint64
 			var err error
 			record := make(map[string]interface{})
+			hasId := false
 
 			for {
 				tables := make(map[string]*SubRecord)
@@ -205,6 +206,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 							continue
 						}
 						if column.Code == "$id" {
+							hasId = true
 							if col != "" {
 								id, _ = strconv.ParseUint(col, 10, 64)
 							}
@@ -252,6 +254,10 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 					peeked = &row
 					break
 				}
+			}
+
+			if hasId && keyField != "" {
+				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.");
 			}
 
 			_, hasKeyField := record[keyField]

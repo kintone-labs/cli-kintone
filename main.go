@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/howeyc/gopass"
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/encoding/japanese"
 	"golang.org/x/text/encoding/simplifiedchinese"
@@ -22,7 +22,7 @@ import (
 const NAME = "cli-kintone"
 
 // VERSION of this package
-const VERSION = "0.11.1"
+const VERSION = "0.12.0"
 
 // IMPORT_ROW_LIMIT The maximum row will be import
 const IMPORT_ROW_LIMIT = 100

@@ -2,10 +2,13 @@ cli-kintone
 ==========
 
 cli-kintone is a command line utility for exporting and importing kintone App data.
+```
+ⓘ This tool has been migrated from git://github.com/kintone/cli-kintone
+```
 
 ## Version
 
-0.11.1
+0.12.0
 
 ## Downloads
 
@@ -15,7 +18,7 @@ These binaries are available for download.
 - Linux
 - Mac OS X
 
-https://github.com/kintone/cli-kintone/releases
+https://github.com/kintone-labs/cli-kintone/releases
 
 ## Usage
 ```text
@@ -57,7 +60,7 @@ Note:
 ```
 cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
-### Export the specified columns to csv file as Shif-JIS encoding
+### Export the specified columns to csv file as Shift-JIS encoding
 ```
 cli-kintone --export -a <APP_ID> -d <FQDN> -e sjis -c "$id, name1, name2" -t <API_TOKEN> > <OUTPUT_FILE>
 ```
@@ -77,10 +80,35 @@ If an $id (or key field) column does not exist in the file, new records will be 
 cli-kintone --export -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b mydownloads
 ```
 ### Import and upload attachment files from ./myuploads directory
+> :warning: WARNING
+>- If the flag "-b" has NOT been specified, even though value of attachment fields in csv is empty or not, attachment fields will be skipped and not updated to kintone.
+>
+>- If the flag "-b" has been specified and value of attachment fields in csv is empty (empty is mean leave blank or ""), the data of attachment fields after importing to kintone will be removed.
+>   - The conditions to remove all of attachment files
+>       - The flag "-b" has been specified with directory path is required.
+>       - Attachment columns are required for csv file but directory path is empty in csv.
+>       - Attachment files are optional.
+>   - The conditions to remove part of attachment files and update part of them
+>       - The flag "-b" has been specified with directory path is required.
+>       - Attachment columns are required for csv file.
+>       - Attachment files are required if there's only part of them will be updated.
+>
+>Ex: CSV file to removed files in attachment fields
+>```
+>"$id","Name","Department","File"
+>"1","Adam Clark","Planning",""
+>"2","Sarah Jones","HR",""
+>```
+>&nbsp;
+
 ```
 cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -b myuploads -f <INPUT_FILE>
 ```
 ### Import and update by selecting a key to bulk update
+> :warning: WARNING
+>
+>The error message `The "$id" field and update key fields cannot be specified together in CSV import file.` will be displayed when both "$id" and key fields are specified in CSV import file.
+
 The key to bulk update must be specified within the INPUT_FILE by placing an * in front of the field code name,  
 e.g. “update_date",“*id",“status".
 
@@ -96,8 +124,8 @@ cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN> -f <INPUT_FILE> -l 25
 printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN> -t <API_TOKEN>
 ```
 
-## Restriction
-* The limit of the file upload size is 10 MB.
+## Restrictions
+* The limit of each file size for uploading to attachments field is 10MB.
 * Client certificates cannot be used with cli-kintone.
 * The following record data cannot be retrieved: Category, Status, Field group.
 * The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
@@ -122,7 +150,7 @@ Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 Requirement
 
-- Go 1.13.7
+- Go 1.15.7
 - Git and Mercurial to be able to clone the packages
 
 [Mac OS X/Linux](./docs/BuildForMacLinux.md)

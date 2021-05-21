@@ -7,12 +7,13 @@ import (
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
-	"github.com/kintone/go-kintone"
+	"github.com/kintone-labs/go-kintone"
 	"golang.org/x/text/transform"
 )
 
@@ -182,6 +183,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			var id uint64
 			var err error
 			record := make(map[string]interface{})
+			hasId := false
 
 			for {
 				tables := make(map[string]*SubRecord)
@@ -204,6 +206,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 							continue
 						}
 						if column.Code == "$id" {
+							hasId = true
 							if col != "" {
 								id, _ = strconv.ParseUint(col, 10, 64)
 							}
@@ -251,6 +254,10 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 					peeked = &row
 					break
 				}
+			}
+
+			if hasId && keyField != "" {
+				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.");
 			}
 
 			_, hasKeyField := record[keyField]
@@ -303,15 +310,24 @@ func setRecordUpdatable(record map[string]interface{}, columns Columns) {
 	}
 }
 func uploadFiles(app *kintone.App, value string) (kintone.FileField, error) {
-	value = strings.TrimSpace(value)
-	if config.FileDir == "" || value == "" {
+	if config.FileDir == "" {
 		return nil, nil
 	}
 
-	files := strings.Split(value, "\n")
 	var ret kintone.FileField = []kintone.File{}
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ret, nil
+	}
+
+	files := strings.Split(value, "\n")
 	for _, file := range files {
-		path := fmt.Sprintf("%s%c%s", config.FileDir, os.PathSeparator, file)
+		var path string
+		if filepath.IsAbs(file) {
+			path = file
+		} else {
+			path = filepath.Join(config.FileDir, file)
+		}
 		fileKey, err := uploadFile(app, path)
 		if err != nil {
 			return nil, err

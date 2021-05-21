@@ -1,9 +1,10 @@
 language: go
 go:
-  - 1.15.5
+  - 1.15.7
 env: "PATH=/home/travis/gopath/bin:$PATH"
 before_install:
   - go get github.com/mattn/gom
+
 script:
   - go vet -x ./...
   # Install dependencies via gom
@@ -29,8 +30,8 @@ script:
 
 deploy:
   provider: releases
-  api_key: 
-    secure: "fIWjn/6Zch58EMlj9n0F1QAyvcgsKcG2/iqDzunQ4hERL8NhHJXMunr5nX73Aee5wdxVucL6TrDOVJuZBgtdrI1Yvmjl2SyE1xX6Kubn2fMCHmwEjW13KYXmLiYNlUAmZ3DqqZZZHXNVemYDF2NduBVI3wr/3lYfcxT8ergmqorC1V2TX06PvEOLJjIHgtR+P23X0J0QlzDnL9yTubA6bVJ+JfH93JwjP2gtSQ0jcZ95daLxmo85EszuX2hl9t255iKGQlKcMoGBhjLyM35Gm6lImE+lugC11Y3jM8JOwqfevekGSrnudvXRCQpGx53K9hIgCabMzrz86ozqWfZS6cIrDa+3QRjrT1UgKfHY1p0sklSGkdFHVm0lPhZMp+9pMSiRZTKhOBOypXVtkvD+6avz9snEXgIhYg9nsfiOblTWIl89ke3Te44p3yS4h5Uv2aPJVKNpPbaE2hCo4GsIiLaEK0gupw1UkICEDbvVdi77hZwnV8PrqPmxdUXKIg1avTvjWTPe2z1xLIU0+NYWOCJjMb5qXWAHeqibHmGdULPRNT4Ulwm1yO1mnqhnzWLRa9vTPDhNVjRUIGwHBS1FC0QBaop7X8N45UzxssyQZnPgxgzkGiL9UoAxdmE94MPVC9bBa9qnT/8dMR24GbKTETAOD1Tpzf0EScsmITqBAHA="
+  api_key:
+    secure: "LyVZrSUd+wjgN1Rxl64TLaVlAJDAFcJcA0L77M6thB8jLpXks4/b5XyMFDFBgXBI2jNJs1TXJll463kTHlA0s0bCBfOd5/jUj6EQw8srXxL5kDKCjX1f8cqc1V4UREddPLYtiAwSthMUrHqnd7aBnVzuhac1S+ttogrFL+bmiFk="
   file:
     - "linux-x64.zip"
     - "macos-x64.zip"

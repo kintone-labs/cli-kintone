@@ -32,7 +32,7 @@ deploy:
     - "linux-x64.zip"
     - "macos-x64.zip"
     - "windows-x64.zip"
-  skip_cleanup: false
+  skip_cleanup: true
   on:
     tags: true
     all_branches: true  # https://github.com/travis-ci/travis-ci/issues/1675

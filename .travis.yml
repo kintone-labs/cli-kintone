@@ -9,6 +9,7 @@ script:
   - go vet -x ./...
   # Install dependencies via gom
   - $HOME/gopath/bin/gom -production install
+  - rm -rf vendor
   - go mod vendor
 
   # Build linux/amd64 archive

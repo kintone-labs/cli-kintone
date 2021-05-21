@@ -9,6 +9,7 @@ script:
   - go vet -x ./...
   # Install dependencies via gom
   - $HOME/gopath/bin/gom -production install
+  - go mod vender
 
   # Build linux/amd64 archive
   - export GOOS="linux"

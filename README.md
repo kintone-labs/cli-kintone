@@ -129,7 +129,6 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
 * Client certificates cannot be used with cli-kintone.
 * The following record data cannot be retrieved: Category, Status, Field group.
 * The following fields cannot be retrieved if they are set inside a Field group: Record number, Created by, Created datetime, Updated by, Updated datetime, Blank space, Label, Border.
-* The usage with proxy server is not supported.<br>This tool has not been tested the operation with proxy server.
 
 ## Restriction of Encode/Decode
 * Windows command prompt may not display characters correctly like "譁�蟄怜喧縺�".  

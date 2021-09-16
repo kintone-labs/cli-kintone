@@ -1,4 +1,4 @@
-cli-kintone
+example-cli-kintone
 ==========
 
 cli-kintone is a command line utility for exporting and importing kintone App data.

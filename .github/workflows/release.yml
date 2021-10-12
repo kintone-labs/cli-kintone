@@ -15,14 +15,17 @@ jobs:
             goos_name: linux
             goarch_name: amd64
             artifact_name: linux-x64
+            bin_name: cli-kintone
           - os: darwin-amd64
             goos_name: darwin
             goarch_name: amd64
             artifact_name: macos-x64
+            bin_name: cli-kintone
           - os: windows-amd64
             goos_name: windows
             goarch_name: amd64
             artifact_name: windows-x64
+            bin_name: cli-kintone.exe
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-go@v2
@@ -35,8 +38,8 @@ jobs:
         run: |
           export GOOS="${{ matrix.goos_name }}"
           export GOARCH="${{ matrix.goarch_name }}"
-          go build -v -tags "forceposix" -o build/${{ matrix.artifact_name }}/cli-kintone
-          zip ${{ matrix.artifact_name }}.zip build/${{ matrix.artifact_name }}/cli-kintone
+          go build -v -tags "forceposix" -o build/${{ matrix.artifact_name }}/${{ matrix.bin_name }}
+          zip ${{ matrix.artifact_name }}.zip build/${{ matrix.artifact_name }}/${{ matrix.bin_name }}
       - name: Upload package to release[binaries]
         uses: svenstaro/upload-release-action@v1-release
         with:

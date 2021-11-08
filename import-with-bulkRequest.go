@@ -232,6 +232,9 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 					}
 				}
 				for key, table := range tables {
+					if len(table.Fields) == 0 {
+						continue
+					}
 					if record[key] == nil {
 						record[key] = getField(kintone.FT_SUBTABLE, "")
 					}

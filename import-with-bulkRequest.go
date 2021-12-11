@@ -152,6 +152,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			peeked = nil
 		}
 		if head && columns == nil {
+			var colError = ""
 			columns = make([]*Column, 0)
 			for _, col := range row {
 				re := regexp.MustCompile("^(.*)\\[(.*)\\]$")
@@ -171,9 +172,25 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 						if row[0] == "" || row[0] == "*" {
 							hasTable = true
 						}
+					} else if config.CheckHeader {
+						var errCol = ""
+						if column.Type == "UNKNOWN" {
+							errCol = col
+						} else if getField(column.Type, "") == nil {
+							errCol = col + ":" + column.Type
+						}
+						if errCol != "" {
+							if colError != "" {
+								colError += ","
+							}
+							colError += "[" + errCol + "]"
+						}
 					}
 					columns = append(columns, column)
 				}
+			}
+			if colError != "" {
+				return fmt.Errorf("Not exists or not supported columns:%s", colError)
 			}
 			head = false
 		} else {
@@ -260,7 +277,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			}
 
 			if hasId && keyField != "" {
-				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.");
+				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.")
 			}
 
 			_, hasKeyField := record[keyField]

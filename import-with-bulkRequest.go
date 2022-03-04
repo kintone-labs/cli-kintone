@@ -213,9 +213,10 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 						} else if column.Code == "$revision" {
 
 						} else if column.Type == kintone.FT_FILE {
+
 							field, err := uploadFiles(app, col)
 							if err != nil {
-								return err
+								return fmt.Errorf("\ncolumn[" + strconv.Itoa(i) +"]"+ " - row[" + strconv.FormatUint(rowNumber, 10)+"]: "+ err.Error())
 							}
 							if field != nil {
 								record[column.Code] = field

@@ -1,0 +1,50 @@
+name: Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  Release:
+    name: Release for ${{ matrix.os }}
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        include:
+          - os: linux-amd64
+            goos_name: linux
+            goarch_name: amd64
+            artifact_name: linux-x64
+            bin_name: cli-kintone
+          - os: darwin-amd64
+            goos_name: darwin
+            goarch_name: amd64
+            artifact_name: macos-x64
+            bin_name: cli-kintone
+          - os: windows-amd64
+            goos_name: windows
+            goarch_name: amd64
+            artifact_name: windows-x64
+            bin_name: cli-kintone.exe
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '1.15.7'
+      - name: Preparation
+        run: |
+          go vet -x ./...
+      - name: Build ${{ matrix.goos_name }}/${{ matrix.goarch_name }} archive
+        run: |
+          export GOOS="${{ matrix.goos_name }}"
+          export GOARCH="${{ matrix.goarch_name }}"
+          go build -v -tags "forceposix" -o build/${{ matrix.artifact_name }}/${{ matrix.bin_name }}
+          zip ${{ matrix.artifact_name }}.zip build/${{ matrix.artifact_name }}/${{ matrix.bin_name }}
+      - name: Upload package to release[binaries]
+        uses: svenstaro/upload-release-action@v1-release
+        with:
+          repo_token: ${{ secrets.CLI_KINTONE_WORKFLOW_TOKEN }}
+          file: ${{ matrix.artifact_name }}.zip
+          asset_name: ${{ matrix.artifact_name }}.zip
+          tag: ${{ github.ref }}
+          overwrite: true

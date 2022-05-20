@@ -54,9 +54,22 @@ func getRow(app *kintone.App) (Row, error) {
 	} else {
 		row = makePartialRow(fields, config.Fields)
 	}
-
+	fixOrderCell(row)
 	return row, err
 
+}
+
+func fixOrderCell(row Row) {
+	for x := range row {
+			y := x + 1
+			for y = range row {
+					if row[x].Code < row[y].Code {
+							temp:= row[x]
+							row[x] = row[y]
+							row[y] = temp
+					}
+			}
+	}
 }
 
 func downloadFile(app *kintone.App, field interface{}, dir string) error {

@@ -128,8 +128,6 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
 * The limit of each file size for uploading to attachments field is 10MB.
 * Client certificates cannot be used with cli-kintone.
 * The following record data cannot be retrieved: Field group, Blank space, Label, Border.
-* The User need to clear the following fields before importing: Category, Status, Record number, Created by, Created datetime, Updated by, Updated datetime
-
 ## Restriction of Encode/Decode
 * Windows command prompt may not display characters correctly like "譁�蟄怜喧縺�".  
   This is due to compatibility issues between Chinese & Japanese characters and the Windows command prompt.

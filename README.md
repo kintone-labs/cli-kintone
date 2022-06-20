@@ -141,7 +141,7 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
   *This issue only occurs when displaying data on Windows command prompt. Data import/export with other means work fine with gbk, big5, sjis and euc-jp encoding.
 
 ## Documents for Basic Usage
-English: https://developer.kintone.io/hc/en-us/articles/115002614853  
+English: https://kintone.dev/en/tutorials/tool-guides/features-of-the-command-line-tool/  
 Japanese: https://developer.cybozu.io/hc/ja/articles/202957070
 
 ## How to Build

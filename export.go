@@ -51,27 +51,26 @@ func getRow(app *kintone.App) (Row, error) {
 
 	if config.Fields == nil {
 		row = makeRow(fields)
-		fixOrderCell(row)
 	} else {
 		row = makePartialRow(fields, config.Fields)
 	}
-
+	fixOrderCell(row)
 	return row, err
 }
 
 func fixOrderCell(row Row) {
 	for x := range row {
-		hasIdOrRevision := x == 0 || x == 1;
+		hasIdOrRevision := x == 0 || x == 1
 		if hasIdOrRevision {
-			continue;
+			continue
 		}
 		y := x + 1
 		for y = range row {
-				if row[x].Index < row[y].Index {
-						temp:= row[x]
-						row[x] = row[y]
-						row[y] = temp
-				}
+			if row[x].Index < row[y].Index {
+				temp := row[x]
+				row[x] = row[y]
+				row[y] = temp
+			}
 		}
 	}
 }
@@ -401,7 +400,7 @@ func makeRow(fields map[string]*kintone.FieldInfo) Row {
 		}
 		if val.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			cell := &Cell{Code: val.Code, Type: val.Type, Index:val.Index}
+			cell := &Cell{Code: val.Code, Type: val.Type, Index: val.Index}
 			row = append(row, cell)
 
 			for _, subField := range val.Fields {
@@ -409,7 +408,7 @@ func makeRow(fields map[string]*kintone.FieldInfo) Row {
 				row = append(row, cell)
 			}
 		} else {
-			cell := &Cell{Code: val.Code, Type: val.Type, Index:val.Index}
+			cell := &Cell{Code: val.Code, Type: val.Type, Index: val.Index}
 			row = append(row, cell)
 		}
 	}
@@ -428,14 +427,14 @@ func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string
 		}
 		if cell.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			cell := &Cell{Code: cell.Code, Type: cell.Type}
+			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: cell.Index}
 			row = append(row, cell)
 
 			// append all sub fields
 			field := fields[val]
 
 			for _, subField := range field.Fields {
-				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val}
+				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val, Index: subField.Index}
 				row = append(row, cell)
 			}
 		} else {

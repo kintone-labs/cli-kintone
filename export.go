@@ -419,7 +419,7 @@ func makeRow(fields map[string]*kintone.FieldInfo) Row {
 func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string) Row {
 	row := make([]*Cell, 0)
 
-	for _, val := range partialFields {
+	for index, val := range partialFields {
 		cell := getCell(val, fields)
 
 		if cell.Type == "UNKNOWN" || cell.IsSubField {
@@ -427,7 +427,7 @@ func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string
 		}
 		if cell.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: cell.Index}
+			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: index}
 			row = append(row, cell)
 
 			// append all sub fields
@@ -438,6 +438,7 @@ func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string
 				row = append(row, cell)
 			}
 		} else {
+			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: index}
 			row = append(row, cell)
 		}
 	}

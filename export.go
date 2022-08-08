@@ -55,11 +55,6 @@ func getRow(app *kintone.App) (Row, error) {
 		row = makePartialRow(fields, config.Fields)
 	}
 	fixOrderCell(row)
-	// for _, r := range row {
-	// 	fmt.Println(r.Index, "index")
-	// 	fmt.Println(r.Code, "code")
-	// 	fmt.Println("------------")
-	// }
 	return row, err
 }
 

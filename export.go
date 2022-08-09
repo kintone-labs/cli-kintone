@@ -419,25 +419,35 @@ func makeRow(fields map[string]*kintone.FieldInfo) Row {
 func makePartialRow(fields map[string]*kintone.FieldInfo, partialFields []string) Row {
 	row := make([]*Cell, 0)
 
-	for _, val := range partialFields {
+	maxFieldIdx := 0
+	for index, val := range partialFields {
 		cell := getCell(val, fields)
-
 		if cell.Type == "UNKNOWN" || cell.IsSubField {
 			continue
 		}
+		currentFieldIdx := index + maxFieldIdx
 		if cell.Type == kintone.FT_SUBTABLE {
 			// record id for subtable
-			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: cell.Index}
+			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: currentFieldIdx}
 			row = append(row, cell)
 
 			// append all sub fields
 			field := fields[val]
-
+			maxSubFieldIdx := 0
 			for _, subField := range field.Fields {
-				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val, Index: subField.Index}
+				currentSubFieldIdx := subField.Index + maxFieldIdx
+				cell := &Cell{Code: subField.Code, Type: subField.Type, IsSubField: true, Table: val, Index: currentSubFieldIdx}
 				row = append(row, cell)
+				if currentSubFieldIdx > maxSubFieldIdx {
+					maxSubFieldIdx = currentSubFieldIdx
+				}
+			}
+			if maxSubFieldIdx > maxFieldIdx {
+				maxFieldIdx = maxSubFieldIdx
 			}
 		} else {
+			cell := &Cell{Code: cell.Code, Type: cell.Type, Index: currentFieldIdx}
+			maxFieldIdx = currentFieldIdx
 			row = append(row, cell)
 		}
 	}

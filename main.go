@@ -80,21 +80,27 @@ type Cell struct {
 // Row config
 type Row []*Cell
 
-func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
+func getSupportedFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 	fields, err := app.Fields()
-	ignoreFields := []string{"STATUS_ASSIGNEE", "CATEGORY", "STATUS"}
-	for key, field := range fields {
-		for _, ignoreField := range ignoreFields {
-			if field.Type == ignoreField {
-				delete(fields, key)
-				break
-			}
-		}
-	}
 	if err != nil {
 		return nil, err
 	}
-	return fields, nil
+	supportedFields := deleteUnsupportedFields(fields)
+	return supportedFields, nil
+}
+
+func deleteUnsupportedFields(fields map[string]*kintone.FieldInfo) map[string]*kintone.FieldInfo {
+	supportedFields := make(map[string]*kintone.FieldInfo)
+	for key, field := range fields {
+		_type := field.Type
+		isIgnoreFields := _type == "STATUS_ASSIGNEE" || _type == "CATEGORY" || _type == "STATUS"
+		if isIgnoreFields {
+			continue
+		}
+		supportedFields[key] = field
+
+	}
+	return supportedFields
 }
 
 // set column information from fieldinfo

@@ -119,7 +119,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 	nextRowImport = config.Line
 	bulkRequests := &BulkRequests{}
 	// retrieve field list
-	fields, err := getSupportedFields(app)
+	fields, err := getFields(app)
 	if err != nil {
 		return err
 	}

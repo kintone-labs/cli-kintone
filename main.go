@@ -82,9 +82,14 @@ type Row []*Cell
 
 func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 	fields, err := app.Fields()
-	ignoreFields := [3]string{"Status", "Assignee", "Categories"}
-	for i := 0; i < len(ignoreFields); i++ {
-		delete(fields, ignoreFields[i])
+	ignoreFields := []string{"STATUS_ASSIGNEE", "CATEGORY", "STATUS"}
+	for key, field := range fields {
+		for _, ignoreField := range ignoreFields {
+			if field.Type == ignoreField {
+				delete(fields, key)
+				break
+			}
+		}
 	}
 	if err != nil {
 		return nil, err

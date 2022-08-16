@@ -74,7 +74,7 @@ type Cell struct {
 	Type       string
 	IsSubField bool
 	Table      string
-	Index      int
+	Index int
 }
 
 // Row config

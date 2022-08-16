@@ -216,7 +216,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 
 							field, err := uploadFiles(app, col)
 							if err != nil {
-								return fmt.Errorf("\ncolumn[" + strconv.Itoa(i) + "]" + " - row[" + strconv.FormatUint(rowNumber, 10) + "]: " + err.Error())
+								return fmt.Errorf("\ncolumn[" + strconv.Itoa(i) +"]"+ " - row[" + strconv.FormatUint(rowNumber, 10)+"]: "+ err.Error())
 							}
 							if field != nil {
 								record[column.Code] = field
@@ -261,7 +261,7 @@ func importFromCSV(app *kintone.App, _reader io.Reader) error {
 			}
 
 			if hasId && keyField != "" {
-				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.")
+				log.Fatalln("The \"$id\" field and update key fields cannot be specified together in CSV import file.");
 			}
 
 			_, hasKeyField := record[keyField]

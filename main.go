@@ -94,13 +94,13 @@ func getSupportedFields(app *kintone.App) (map[string]*kintone.FieldInfo, error)
 		return nil, err
 	}
 	for key, field := range fields {
-		switch field.Type {
-		case "STATUS_ASSIGNEE","CATEGORY","STATUS":
-			delete(fields, key)
-		default: continue
-		}
-
-	}
+        switch field.Type {
+        case "STATUS_ASSIGNEE", "CATEGORY", "STATUS":
+            delete(fields, key)
+        default:
+            continue
+        }
+    }
 	return fields, nil
 }
 

@@ -74,7 +74,7 @@ type Cell struct {
 	Type       string
 	IsSubField bool
 	Table      string
-	Index int
+	Index      int
 }
 
 // Row config
@@ -84,6 +84,22 @@ func getFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
 	fields, err := app.Fields()
 	if err != nil {
 		return nil, err
+	}
+	return fields, nil
+}
+
+func getSupportedFields(app *kintone.App) (map[string]*kintone.FieldInfo, error) {
+	fields, err := getFields(app)
+	if err != nil {
+		return nil, err
+	}
+	for key, field := range fields {
+		switch field.Type {
+		case "STATUS_ASSIGNEE", "CATEGORY", "STATUS":
+			delete(fields, key)
+		default:
+			continue
+		}
 	}
 	return fields, nil
 }

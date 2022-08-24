@@ -44,7 +44,7 @@ func getRecordsForSeekMethod(app *kintone.App, id uint64, fields []string, isRec
 func getRow(app *kintone.App) (Row, error) {
 	var row Row
 	// retrieve field list
-	fields, err := getFields(app)
+	fields, err := getSupportedFields(app)
 	if err != nil {
 		return row, err
 	}

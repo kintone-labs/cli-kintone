@@ -8,7 +8,7 @@ cli-kintone is a command line utility for exporting and importing kintone App da
 
 ## Version
 
-0.14.0
+0.14.1
 
 ## Downloads
 
@@ -149,7 +149,7 @@ printf "name,age\nJohn,37\nJane,29" | cli-kintone --import -a <APP_ID> -d <FQDN>
 
 Requirement
 
-- Go 1.15.7
+- Go 1.15.15
 - Git and Mercurial to be able to clone the packages
 
 [Mac OS X/Linux](./docs/BuildForMacLinux.md)

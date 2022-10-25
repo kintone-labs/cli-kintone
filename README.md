@@ -2,9 +2,9 @@ cli-kintone
 ==========
 
 cli-kintone is a command line utility for exporting and importing kintone App data.
-```
-ⓘ This tool has been migrated from git://github.com/kintone/cli-kintone
-```
+
+> We released cli-kintone version 1.0.0 on 24 October 2022. If you want to use it, please check [at here.](https://github.com/kintone/cli-kintone)
+Currently, the mainstream is v1. We will stop the maintenance of v0 on <b>31 October 2023</b>.
 
 ## Version
 
